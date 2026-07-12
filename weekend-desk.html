@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekend Desk — 바이낸스 환산 시세 비교</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E12;
+    --panel:#131820;
+    --panel-2:#171D27;
+    --border:#242B36;
+    --border-soft:#1B212B;
+    --text:#E8ECF1;
+    --text-dim:#8C96A6;
+    --text-faint:#545D6B;
+    --copper:#E2903F;
+    --copper-dim:rgba(226,144,63,0.14);
+    --mint:#5FE3B3;
+    --mint-dim:rgba(95,227,179,0.14);
+    --coral:#F2666E;
+    --coral-dim:rgba(242,102,110,0.14);
+    --font-display:'Space Grotesk',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --font-body:'Inter',sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.035) 1px, transparent 0) 0 0/28px 28px,
+      var(--bg);
+    color:var(--text); font-family:var(--font-body);
+    padding:28px 20px 60px; min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .app{ max-width:1180px; margin:0 auto; }
+
+  /* ---------- HEADER ---------- */
+  header.top{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
+  .brand-eyebrow{ font-family:var(--font-mono); font-size:11px; letter-spacing:.16em; color:var(--copper); text-transform:uppercase; margin-bottom:6px; }
+  h1{ font-family:var(--font-display); font-weight:700; font-size:28px; letter-spacing:-0.01em; }
+  .subtitle{ color:var(--text-dim); font-size:13.5px; margin-top:6px; max-width:560px; line-height:1.55; }
+  .clock-block{ text-align:right; }
+  .clock{ font-family:var(--font-mono); font-size:24px; font-weight:600; }
+  .clock-date{ font-family:var(--font-mono); font-size:11.5px; color:var(--text-dim); margin-top:2px; }
+
+  /* ---------- FX TICKER ---------- */
+  .fx-bar{
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:12px 18px; margin-bottom:18px;
+  }
+  .fx-item{ display:flex; align-items:baseline; gap:8px; }
+  .fx-label{ font-family:var(--font-mono); font-size:11px; color:var(--text-faint); letter-spacing:.05em; }
+  .fx-value{ font-family:var(--font-mono); font-size:16px; font-weight:600; }
+  .fx-change{ font-family:var(--font-mono); font-size:11.5px; font-weight:600; }
+  .fx-change.up{ color:var(--mint); } .fx-change.down{ color:var(--coral); } .fx-change.flat{ color:var(--text-dim); }
+  .fx-source{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .fx-edit{
+    margin-left:auto; display:flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint);
+  }
+  .fx-edit input{
+    width:88px; background:var(--panel-2); border:1px solid var(--border); border-radius:6px; color:var(--text);
+    font-family:var(--font-mono); font-size:11.5px; padding:4px 6px;
+  }
+  .fx-stale{ color:var(--coral); }
+
+  /* ---------- SESSION PULSE ---------- */
+  .pulse-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px 22px 16px; margin-bottom:22px; position:relative; overflow:hidden; }
+  .pulse-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;}
+  .pulse-title{ font-family:var(--font-display); font-size:14px; font-weight:600; }
+  .pulse-title span{ color:var(--text-faint); font-weight:400; }
+  .weekend-tag{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; padding:3px 9px; border-radius:100px; background:var(--coral-dim); color:var(--coral); border:1px solid rgba(242,102,110,0.3); display:none; }
+  .weekend-tag.show{ display:inline-block; }
+  .pulse-row{ display:flex; align-items:center; gap:14px; margin-bottom:9px; position:relative; }
+  .pulse-label{ width:96px; flex-shrink:0; font-family:var(--font-mono); font-size:11.5px; color:var(--text-dim); }
+  .pulse-status{ width:64px; flex-shrink:0; font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:.04em; text-align:right; }
+  .pulse-status.open{ color:var(--mint); } .pulse-status.closed{ color:var(--text-faint); }
+  .pulse-track{ flex:1; display:grid; grid-template-columns:repeat(24,1fr); gap:2px; height:16px; position:relative; }
+  .pulse-cell{ background:var(--border-soft); border-radius:2px; }
+  .pulse-cell.open{ background:var(--copper-dim); }
+  .pulse-row.live .pulse-cell{ background:var(--mint-dim); }
+  .pulse-row.live .pulse-cell.open{ background:rgba(95,227,179,0.32); }
+  .now-marker{ position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--copper); box-shadow:0 0 8px rgba(226,144,63,0.7); z-index:3; border-radius:2px; }
+  .now-marker::after{ content:'NOW'; position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-family:var(--font-mono); font-size:9px; color:var(--copper); letter-spacing:.06em; }
+  .pulse-scale{ display:flex; padding-left:110px; margin-top:6px; }
+  .pulse-scale span{ flex:1; font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); }
+  .pulse-foot{ margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft); font-size:11.5px; color:var(--text-faint); line-height:1.6; }
+  .pulse-foot b{ color:var(--text-dim); font-weight:600; }
+
+  /* ---------- CONTROLS ---------- */
+  .controls{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+  .section-label{ font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; color:var(--text-faint); text-transform:uppercase; }
+  .ctrl-right{ display:flex; align-items:center; gap:10px; }
+  select, button.refresh-btn{ background:var(--panel-2); border:1px solid var(--border); color:var(--text-dim); font-family:var(--font-mono); font-size:11.5px; padding:6px 10px; border-radius:8px; cursor:pointer; }
+  button.refresh-btn{ color:var(--text); }
+  button.refresh-btn:hover, select:hover{ border-color:var(--copper); color:var(--text); }
+  .live-dot{ width:6px; height:6px; border-radius:50%; background:var(--mint); box-shadow:0 0 6px var(--mint); animation:blink 1.6s infinite; }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+  /* ---------- GRID / CARDS ---------- */
+  .category-block{ margin-bottom:22px; }
+  .category-title{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.14em; color:var(--text-faint); text-transform:uppercase; margin:0 0 10px 2px; }
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 16px 14px; position:relative; overflow:hidden; transition:border-color .25s; }
+  .card:hover{ border-color:#333c4a; }
+  .card::before{ content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg, var(--copper), transparent); opacity:.7; }
+  .card-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .card-names{ display:flex; flex-direction:column; }
+  .name-ko{ font-family:var(--font-display); font-weight:600; font-size:15px; }
+  .name-symbol{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); margin-top:2px; }
+  .head-right{ display:flex; flex-direction:column; align-items:flex-end; gap:5px; }
+  .status-dot{ width:7px; height:7px; border-radius:50%; }
+  .status-dot.ok{ background:var(--mint); box-shadow:0 0 6px var(--mint); animation:blink 2s infinite; }
+  .status-dot.err{ background:var(--coral); }
+  .status-dot.pending{ background:var(--text-faint); }
+  .mkt-pill{ font-family:var(--font-mono); font-size:9px; letter-spacing:.05em; padding:2px 6px; border-radius:100px; border:1px solid var(--border); color:var(--text-faint); }
+  .mkt-pill.open{ color:var(--mint); border-color:rgba(95,227,179,0.35); }
+
+  .price-label{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); letter-spacing:.04em; margin-bottom:2px; }
+  .price{ font-family:var(--font-mono); font-size:23px; font-weight:600; letter-spacing:-0.01em; }
+  .price-sub{ font-family:var(--font-mono); font-size:11px; color:var(--text-dim); margin-top:2px; }
+
+  .compare-block{ margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border-soft); }
+  .compare-label{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:.04em; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; }
+  .compare-row{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
+  .compare-delta{ font-family:var(--font-mono); font-size:14px; font-weight:600; }
+  .compare-pct{ font-family:var(--font-mono); font-size:12.5px; font-weight:600; padding:1px 7px; border-radius:6px; }
+  .compare-delta.up, .compare-pct.up{ color:var(--mint); }
+  .compare-pct.up{ background:var(--mint-dim); }
+  .compare-delta.down, .compare-pct.down{ color:var(--coral); }
+  .compare-pct.down{ background:var(--coral-dim); }
+  .compare-delta.flat, .compare-pct.flat{ color:var(--text-dim); background:var(--border-soft); }
+  .compare-empty{ font-size:11.5px; color:var(--text-faint); font-family:var(--font-body); }
+
+  .baseline-row{ display:flex; align-items:center; gap:6px; margin-top:8px; font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .baseline-row input{ width:110px; background:var(--panel); border:1px solid var(--border); border-radius:5px; color:var(--text); font-family:var(--font-mono); font-size:10.5px; padding:3px 6px; }
+
+  .change24-badge{ font-family:var(--font-mono); font-size:10.5px; font-weight:600; padding:2px 6px; border-radius:6px; }
+  .change24-badge.up{ color:var(--mint); background:var(--mint-dim); }
+  .change24-badge.down{ color:var(--coral); background:var(--coral-dim); }
+  .change24-badge.flat{ color:var(--text-dim); background:var(--border-soft); }
+
+  .sparkline-wrap{ height:44px; margin:10px 0 6px; }
+  .sparkline-wrap canvas{ width:100%; height:100%; display:block; }
+
+  /* ---------- SENTIMENT: compact card indicator ---------- */
+  .sentiment-mini{ margin-top:10px; }
+  .sentiment-mini-bar{ display:flex; height:6px; border-radius:4px; overflow:hidden; background:var(--border-soft); }
+  .sentiment-mini-bar .seg-buy{ background:var(--mint); }
+  .sentiment-mini-bar .seg-neutral{ background:var(--text-faint); }
+  .sentiment-mini-bar .seg-sell{ background:var(--coral); }
+  .sentiment-mini-label{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-top:5px; }
+  .sentiment-mini-label b{ font-weight:600; }
+  .sentiment-mini-label.buy b{ color:var(--mint); }
+  .sentiment-mini-label.sell b{ color:var(--coral); }
+  .sentiment-mini-label.neutral b{ color:var(--text-dim); }
+
+  /* ---------- REFERENCE INDICATOR (momentum + funding + board, NOT a prediction) ---------- */
+  .indicator-row{ display:flex; align-items:center; gap:8px; margin-top:9px; }
+  .indicator-track{ position:relative; flex:1; height:6px; background:var(--border-soft); border-radius:4px; }
+  .indicator-zero{ position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:var(--text-faint); }
+  .indicator-fill{ position:absolute; top:0; height:100%; border-radius:4px; }
+  .indicator-fill.up{ background:var(--mint); left:50%; }
+  .indicator-fill.down{ background:var(--coral); right:50%; }
+  .indicator-fill.flat{ background:var(--text-faint); left:calc(50% - 1px); width:2px; }
+  .indicator-label{ font-family:var(--font-mono); font-size:10px; font-weight:600; white-space:nowrap; }
+  .indicator-label.up{ color:var(--mint); } .indicator-label.down{ color:var(--coral); } .indicator-label.flat{ color:var(--text-dim); }
+  .indicator-caption{ font-family:var(--font-mono); font-size:9px; color:var(--text-faint); margin-top:4px; }
+
+  /* ---------- SENTIMENT: board summary panel ---------- */
+  .sentiment-panel{ margin-bottom:16px; padding:12px 14px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border-soft); }
+  .sentiment-panel-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+  .sentiment-panel-head > span{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); letter-spacing:.05em; text-transform:uppercase; }
+  .period-tabs{ display:flex; gap:4px; }
+  .period-tab{ font-family:var(--font-mono); font-size:10px; padding:4px 9px; border-radius:100px; border:1px solid var(--border); background:var(--panel); color:var(--text-faint); cursor:pointer; }
+  .period-tab.active{ border-color:var(--copper); color:var(--copper); background:var(--copper-dim); }
+  .sentiment-bars{ display:flex; flex-direction:column; gap:8px; }
+  .sentiment-bar-row{ display:flex; align-items:center; gap:8px; }
+  .sentiment-bar-label{ width:34px; font-family:var(--font-mono); font-size:11px; flex-shrink:0; }
+  .sentiment-bar-label.buy{ color:var(--mint); } .sentiment-bar-label.sell{ color:var(--coral); } .sentiment-bar-label.neutral{ color:var(--text-dim); }
+  .sentiment-bar-track{ flex:1; height:8px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
+  .sentiment-bar-fill{ height:100%; border-radius:5px; }
+  .sentiment-bar-fill.buy{ background:var(--mint); } .sentiment-bar-fill.sell{ background:var(--coral); } .sentiment-bar-fill.neutral{ background:var(--text-faint); }
+  .sentiment-bar-pct{ width:58px; text-align:right; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); flex-shrink:0; }
+  .sentiment-empty{ font-size:11.5px; color:var(--text-faint); text-align:center; padding:6px 0; }
+  .sentiment-dominant{ margin-top:9px; font-size:11.5px; text-align:center; font-family:var(--font-mono); }
+  .sentiment-dominant.buy{ color:var(--mint); } .sentiment-dominant.sell{ color:var(--coral); } .sentiment-dominant.neutral{ color:var(--text-dim); }
+
+  .card-foot{ display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); padding-top:9px; border-top:1px solid var(--border-soft); }
+  .card-foot .hi{ color:var(--mint); } .card-foot .lo{ color:var(--coral); }
+
+  .card-error{ font-size:12px; color:var(--coral); line-height:1.5; padding:10px 0; font-family:var(--font-body); }
+  .card-error small{ display:block; margin-top:4px; color:var(--text-faint); font-family:var(--font-mono); font-size:10px; }
+
+  .disclaimer{ margin-top:26px; padding:16px 18px; border:1px solid var(--border-soft); border-radius:12px; background:var(--panel); font-size:11.5px; color:var(--text-faint); line-height:1.7; }
+  .disclaimer b{ color:var(--text-dim); }
+
+  /* ---------- AD SLOTS (placeholders — paste your AdSense unit inside) ---------- */
+  .ad-slot{
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px;
+    border:1px dashed var(--border); border-radius:12px; background:var(--panel-2);
+    color:var(--text-faint); font-family:var(--font-mono); font-size:10.5px; letter-spacing:.04em;
+    margin:18px 0; min-height:90px;
+  }
+  .ad-slot.leaderboard{ min-height:90px; }
+  .ad-slot.banner{ min-height:120px; }
+  .ad-slot-label{ text-transform:uppercase; letter-spacing:.12em; font-size:9.5px; color:var(--text-faint); }
+  .ad-slot-sub{ font-size:9.5px; color:var(--text-faint); opacity:.7; }
+
+  /* ---------- COMMUNITY BOARD ---------- */
+  .board-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:22px; }
+  .board-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+  .board-title{ font-family:var(--font-display); font-size:14px; font-weight:600; }
+  .board-title span{ color:var(--text-faint); font-weight:400; }
+  .board-scope{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .board-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .board-tab{
+    font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:100px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text-dim); cursor:pointer;
+  }
+  .board-tab.active{ border-color:var(--copper); color:var(--copper); background:var(--copper-dim); }
+  .board-form{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .board-form input[type=text]{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
+    font-family:var(--font-body); font-size:12.5px; padding:8px 10px;
+  }
+  .board-form input#boardNick{ width:120px; }
+  .board-form select{ padding:8px 10px; }
+  .board-form textarea{
+    flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
+    font-family:var(--font-body); font-size:12.5px; padding:8px 10px; resize:vertical; min-height:38px;
+  }
+  .board-form button{
+    background:var(--copper); border:none; color:#12151a; font-family:var(--font-mono); font-weight:600;
+    font-size:12px; padding:0 16px; border-radius:8px; cursor:pointer;
+  }
+  .board-list{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; }
+  .board-post{ border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; background:var(--panel-2); }
+  .board-post-head{ display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap; }
+  .board-nick{ font-family:var(--font-display); font-weight:600; font-size:12.5px; }
+  .board-sentiment{ font-family:var(--font-mono); font-size:9.5px; padding:1px 7px; border-radius:100px; }
+  .board-sentiment.buy{ color:var(--mint); background:var(--mint-dim); }
+  .board-sentiment.sell{ color:var(--coral); background:var(--coral-dim); }
+  .board-sentiment.neutral{ color:var(--text-dim); background:var(--border-soft); }
+  .board-time{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .board-text{ font-size:12.5px; color:var(--text); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+  .board-empty{ font-size:12px; color:var(--text-faint); padding:12px 0; text-align:center; }
+  .board-note{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-top:10px; }
+
+  /* ---------- LOGIN MOCK (preview only — wired for real after Firebase step) ---------- */
+  .login-mock-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .login-btn{ font-family:var(--font-body); font-weight:600; font-size:12px; padding:8px 14px; border-radius:8px; border:none; cursor:pointer; }
+  .login-btn.kakao{ background:#FEE500; color:#191600; }
+  .login-btn.apple{ background:#0a0a0a; color:#fff; border:1px solid #333; }
+  .login-mock-note{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .logout-mock-btn{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); background:none; border:1px solid var(--border); border-radius:100px; padding:4px 10px; cursor:pointer; margin-left:auto; }
+  .logout-mock-btn:hover{ color:var(--text); border-color:var(--text-dim); }
+
+  .board-gate{ text-align:center; padding:36px 20px; color:var(--text-dim); }
+  .board-gate-icon{ font-size:26px; margin-bottom:10px; }
+  .board-gate-title{ font-family:var(--font-display); font-weight:600; font-size:14px; margin-bottom:6px; color:var(--text); }
+  .board-gate-sub{ font-size:12px; color:var(--text-faint); max-width:360px; margin:0 auto; line-height:1.6; }
+
+  /* ---------- REPORT ---------- */
+  .report-btn{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); background:none; border:1px solid var(--border-soft); border-radius:6px; padding:2px 7px; cursor:pointer; }
+  .report-btn:hover{ color:var(--coral); border-color:var(--coral); }
+  .board-post.reported{ opacity:.55; }
+  .reported-badge{ font-family:var(--font-mono); font-size:9px; color:var(--coral); border:1px solid var(--coral); border-radius:100px; padding:1px 6px; }
+  .head-spacer{ flex:1; }
+
+  /* ---------- TOAST ---------- */
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-2); border:1px solid var(--border); color:var(--text); font-family:var(--font-body);
+    font-size:12.5px; padding:10px 16px; border-radius:10px; opacity:0; transition:opacity .25s, transform .25s;
+    pointer-events:none; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,0.4); max-width:320px; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:640px){
+    .clock-block{ text-align:left; } header.top{ flex-direction:column; }
+    .pulse-label{ width:64px; font-size:10px; } .pulse-status{ width:44px; } .pulse-scale{ padding-left:78px; }
+    .pulse-scale span:nth-child(odd){ opacity:0; }
+    .fx-edit{ margin-left:0; width:100%; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div>
+      <div class="brand-eyebrow">binance perp · krw / usd 환산 비교</div>
+      <h1>Weekend Desk</h1>
+      <p class="subtitle">바이낸스 무기한선물 시세를 실시간 환율로 환산해 직전 종가와 바로 비교합니다. KRX·나스닥이 쉬는 시간에도 흐름을 확인하세요.</p>
+    </div>
+    <div class="clock-block">
+      <div class="clock" id="clockKST">--:--:--</div>
+      <div class="clock-date" id="dateKST">KST</div>
+    </div>
+  </header>
+
+  <div class="fx-bar">
+    <div class="fx-item">
+      <span class="fx-label">USDT/KRW</span>
+      <span class="fx-value" id="fxValue">-</span>
+      <span class="fx-change flat" id="fxChange">-</span>
+    </div>
+    <span class="fx-source" id="fxSource">환율 불러오는 중…</span>
+    <div class="fx-edit">
+      직접 입력 <input type="number" id="fxManualInput" placeholder="예: 1450">
+      <button class="refresh-btn" id="fxManualBtn" style="padding:3px 8px;">적용</button>
+    </div>
+  </div>
+
+  <!-- AD SLOT 1: paste your Google AdSense <ins> + script tag inside this div (e.g. a 728x90 or responsive leaderboard unit) -->
+  <div class="ad-slot leaderboard" id="adSlotTop">
+    <span class="ad-slot-label">Ad Space</span>
+    <span class="ad-slot-sub">여기에 AdSense 광고 단위 코드를 붙여넣으세요 (예: 728×90 리더보드)</span>
+  </div>
+
+  <div class="pulse-card">
+    <div class="pulse-head">
+      <div class="pulse-title">세션 펄스 <span>· 오늘(KST) 24시간 기준 개장 구간</span></div>
+      <div class="weekend-tag" id="weekendTag">주말 — 현물시장 전체 휴장</div>
+    </div>
+    <div class="pulse-row" id="rowKRX">
+      <div class="pulse-label">KRX 코스피</div>
+      <div class="pulse-track" id="trackKRX"></div>
+      <div class="pulse-status" id="statusKRX">···</div>
+    </div>
+    <div class="pulse-row" id="rowNASDAQ">
+      <div class="pulse-label">NASDAQ</div>
+      <div class="pulse-track" id="trackNASDAQ"></div>
+      <div class="pulse-status" id="statusNASDAQ">···</div>
+    </div>
+    <div class="pulse-row live" id="rowPERP">
+      <div class="pulse-label">Binance Perp</div>
+      <div class="pulse-track" id="trackPERP"></div>
+      <div class="pulse-status open">24 / 7</div>
+    </div>
+    <div class="pulse-scale">
+      <span>00</span><span>03</span><span>06</span><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span>
+    </div>
+    <div class="pulse-foot" id="pulseFoot">시간 계산 중…</div>
+  </div>
+
+  <div class="controls">
+    <div class="section-label">Tracked Instruments</div>
+    <div class="ctrl-right">
+      <span class="live-dot" id="autoDot"></span>
+      <select id="intervalSelect">
+        <option value="1000" selected>1초 갱신</option>
+        <option value="2000">2초 갱신</option>
+        <option value="5000">5초 갱신</option>
+        <option value="8000">8초 갱신</option>
+        <option value="15000">15초 갱신</option>
+        <option value="30000">30초 갱신</option>
+      </select>
+      <button class="refresh-btn" id="refreshBtn">↻ 지금 갱신</button>
+    </div>
+  </div>
+
+  <div class="category-block">
+    <div class="category-title">한국 반도체 · 국내(KRX)·나스닥 동시 상장 비교</div>
+    <div class="grid" id="gridKR"></div>
+  </div>
+  <div class="category-block">
+    <div class="category-title">미국 메모리 · NASDAQ 달러 종가 대비</div>
+    <div class="grid" id="gridUS"></div>
+  </div>
+  <div class="category-block">
+    <div class="category-title">프리 IPO · 비교 기준가 없음</div>
+    <div class="grid" id="gridPre"></div>
+  </div>
+
+  <div class="board-card">
+    <div class="board-head">
+      <div class="board-title">종목 게시판 <span>· 종목별 자유 의견</span></div>
+      <div class="board-scope" id="boardScope">저장 방식 확인 중…</div>
+    </div>
+
+    <div class="login-mock-row">
+      <button class="login-btn kakao" id="loginKakaoBtn">💬 카카오로 로그인</button>
+      <button class="login-btn apple" id="loginAppleBtn"> Apple로 로그인</button>
+      <span class="login-mock-note">※ 로그인 연동 전 미리보기예요</span>
+      <button class="logout-mock-btn" id="logoutMockBtn" style="display:none;">로그아웃 (미리보기)</button>
+    </div>
+
+    <div class="board-gate" id="boardGate">
+      <div class="board-gate-icon">🔒</div>
+      <div class="board-gate-title">종목 게시판은 로그인 후 이용할 수 있어요</div>
+      <div class="board-gate-sub">카카오 또는 Apple로 로그인하면 다른 사람들의 게시글과 심리 요약을 볼 수 있어요</div>
+    </div>
+
+    <div id="boardContent" style="display:none;">
+      <div class="board-tabs" id="boardTabs"></div>
+
+      <div class="sentiment-panel">
+        <div class="sentiment-panel-head">
+          <span>심리 요약 · <span id="sentimentPanelSymbol"></span></span>
+          <div class="period-tabs" id="periodTabs">
+            <button class="period-tab active" data-period="1">오늘(24h)</button>
+            <button class="period-tab" data-period="7">이번주(7일)</button>
+            <button class="period-tab" data-period="30">이번달(30일)</button>
+          </div>
+        </div>
+        <div id="sentimentSummary"></div>
+      </div>
+
+      <div class="board-form">
+        <input type="text" id="boardNick" placeholder="닉네임">
+        <select id="boardSentiment">
+          <option value="neutral">중립</option>
+          <option value="buy">매수</option>
+          <option value="sell">매도</option>
+        </select>
+        <textarea id="boardText" placeholder="이 종목에 대한 의견을 남겨보세요"></textarea>
+        <button id="boardSubmit">등록</button>
+      </div>
+      <div class="board-list" id="boardList"></div>
+      <div class="board-note" id="boardNote"></div>
+    </div>
+  </div>
+
+  <!-- AD SLOT 2: paste your Google AdSense <ins> + script tag inside this div (e.g. an in-article or 300x250 unit) -->
+  <div class="ad-slot banner" id="adSlotMid">
+    <span class="ad-slot-label">Ad Space</span>
+    <span class="ad-slot-sub">여기에 AdSense 광고 단위 코드를 붙여넣으세요 (예: 반응형 인아티클 광고)</span>
+  </div>
+
+  <div class="disclaimer">
+    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USDT/KRW 환율은 업비트 KRW-USDT 시세(실패 시 공개 환율 API)를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판은 로그인 후에만 게시글과 심리 요약을 볼 수 있도록 설계돼 있고(현재는 미리보기), 게시판 글은 로그인한 모든 이용자에게 공개·공유될 수 있습니다 — 개인정보나 민감한 내용은 남기지 마세요. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. 카카오/Apple 로그인 버튼과 신고 버튼은 현재 <b>미리보기</b>이며, 실제 인증·이메일 알림·운영자 삭제 권한은 Firebase 연동 이후 작동합니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const API_BASE = 'https://fapi.binance.com/fapi/v1';
+
+  // baselineDefault is a *seed* value only — real defaults should be refreshed by the user each trading day.
+  const INSTRUMENTS = [
+    { symbol:'SKHYNIXUSDT', nameKo:'SK하이닉스 (국내 KRX)', nameEn:'SK Hynix — Korea Exchange',  group:'gridKR',  market:'KRX',    baseCcy:'KRW', baseDefault:2180000 },
+    { symbol:'SKHYUSDT',    nameKo:'SK하이닉스 (나스닥 ADR)', nameEn:'SK Hynix ADR — Nasdaq (SKHY)', group:'gridKR', market:'NASDAQ', baseCcy:'USD', baseDefault:168.01 },
+    { symbol:'SAMSUNGUSDT', nameKo:'삼성전자',   nameEn:'Samsung Electronics', group:'gridKR', market:'KRX', baseCcy:'KRW', baseDefault:285000 },
+    { symbol:'SNDKUSDT',    nameKo:'샌디스크',   nameEn:'SanDisk',   group:'gridUS',  market:'NASDAQ', baseCcy:'USD', baseDefault:1915.92 },
+    { symbol:'MUUSDT',      nameKo:'마이크론',   nameEn:'Micron Technology', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:979.30 },
+    { symbol:'SPCXUSDT',    nameKo:'스페이스X',  nameEn:'SpaceX (Pre-IPO)', group:'gridPre', market:'PREIPO', baseCcy:null, baseDefault:null },
+  ];
+
+  const state = {}; // symbol -> { closes, ok, updatedAt, lastPrice, high, low, changePct, baseline }
+  let fxRate = null, fxChangeRate = null, fxSource = 'loading', fxManual = false;
+
+  const hasStorage = () => (typeof window!=='undefined' && window.storage && typeof window.storage.get==='function');
+
+  /* ---------- Persistence helpers ---------- */
+  async function loadBaseline(symbol, fallback){
+    if (hasStorage()){
+      try{
+        const r = await window.storage.get('baseline:'+symbol, false);
+        if (r && r.value!=null && r.value!=='') return parseFloat(r.value);
+      }catch(e){ /* key not found or storage unavailable — use fallback */ }
+    }
+    return fallback;
+  }
+  async function saveBaseline(symbol, value){
+    if (!hasStorage()) return;
+    try{ await window.storage.set('baseline:'+symbol, String(value), false); }catch(e){}
+  }
+  async function loadStoredFx(){
+    if (!hasStorage()) return null;
+    try{ const r = await window.storage.get('fxRate:last', false); return r ? parseFloat(r.value) : null; }catch(e){ return null; }
+  }
+  async function saveStoredFx(v){
+    if (!hasStorage()) return;
+    try{ await window.storage.set('fxRate:last', String(v), false); }catch(e){}
+  }
+
+  /* ---------- Build cards ---------- */
+  function buildCards(){
+    INSTRUMENTS.forEach(inst=>{
+      const el = document.createElement('div');
+      el.className = 'card';
+      el.id = 'card-' + inst.symbol;
+      el.innerHTML = `
+        <div class="card-head">
+          <div class="card-names">
+            <div class="name-ko">${inst.nameKo}</div>
+            <div class="name-symbol">${inst.symbol} · ${inst.nameEn}</div>
+          </div>
+          <div class="head-right">
+            <div class="status-dot pending" id="dot-${inst.symbol}"></div>
+            <div class="mkt-pill" id="mkt-${inst.symbol}">···</div>
+          </div>
+        </div>
+        <div class="card-body" id="body-${inst.symbol}">
+          ${cardBodyTemplate(inst)}
+        </div>`;
+      document.getElementById(inst.group).appendChild(el);
+      state[inst.symbol] = { closes:[], ok:null, updatedAt:null, lastPrice:null, high:null, low:null, changePct:null, baseline:inst.baseDefault, fundingRate:null, boardStats:null };
+    });
+  }
+
+  function cardBodyTemplate(inst){
+    return `
+      <div class="price-label">${inst.market==='KRX' ? '환산가 (KRW)' : inst.market==='NASDAQ' ? '바이낸스 원가 (USD)' : '바이낸스 원가 (USD, 참고용)'}</div>
+      <div class="price" id="price-${inst.symbol}">-</div>
+      <div class="price-sub" id="priceSub-${inst.symbol}">-</div>
+
+      <div class="compare-block" id="compareBlock-${inst.symbol}">
+        <div class="compare-label">
+          <span>기준 종가 대비</span>
+          <span class="change24-badge flat" id="change24-${inst.symbol}">24h --.--%</span>
+        </div>
+        <div id="compareContent-${inst.symbol}"><span class="compare-empty">계산 중…</span></div>
+        ${inst.market!=='PREIPO' ? `
+        <div class="baseline-row">
+          기준 종가(${inst.baseCcy})
+          <input type="number" id="baseline-${inst.symbol}" value="${inst.baseDefault ?? ''}" step="any">
+          <button class="refresh-btn" data-save="${inst.symbol}" style="padding:2px 7px;">저장</button>
+        </div>` : `<div class="baseline-row">비상장 — 비교 기준가 없음</div>`}
+      </div>
+
+      <div class="sentiment-mini" id="sentimentMini-${inst.symbol}"></div>
+
+      <div class="sparkline-wrap"><canvas id="spark-${inst.symbol}"></canvas></div>
+      <div class="card-foot">
+        <span>24h High <b class="hi" id="hi-${inst.symbol}">-</b></span>
+        <span>24h Low <b class="lo" id="lo-${inst.symbol}">-</b></span>
+        <span id="age-${inst.symbol}">-</span>
+      </div>`;
+  }
+
+  /* ---------- Formatting ---------- */
+  function fmtKRW(n){ return '₩' + Math.round(n).toLocaleString('ko-KR'); }
+  function fmtUSD(n){ return '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmtRaw(n){
+    if (n>=100) return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if (n>=1)   return n.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3});
+    return n.toLocaleString('en-US',{minimumFractionDigits:4,maximumFractionDigits:4});
+  }
+  function timeAgo(ts){
+    if(!ts) return '-';
+    const s = Math.max(0, Math.floor((Date.now()-ts)/1000));
+    if (s < 60) return s + '초 전';
+    return Math.floor(s/60) + '분 전';
+  }
+
+  /* ---------- Sparkline ---------- */
+  function drawSparkline(canvas, closes, up){
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+    if (!closes || closes.length < 2) return;
+    const min = Math.min(...closes), max = Math.max(...closes);
+    const range = (max-min) || 1, pad = 3;
+    const stepX = (w-pad*2)/(closes.length-1);
+    const color = up ? '#5FE3B3' : '#F2666E';
+    ctx.beginPath();
+    closes.forEach((c,i)=>{
+      const x = pad + i*stepX;
+      const y = pad + (1-(c-min)/range)*(h-pad*2);
+      i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    });
+    ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.lineJoin='round'; ctx.stroke();
+    ctx.lineTo(pad+(closes.length-1)*stepX, h-pad);
+    ctx.lineTo(pad, h-pad); ctx.closePath();
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, color+'33'); grad.addColorStop(1, color+'00');
+    ctx.fillStyle = grad; ctx.fill();
+  }
+
+  /* ---------- FX fetchers ---------- */
+  async function fetchFx(){
+    // 1) Upbit KRW-USDT (live, includes change vs prev close)
+    try{
+      const res = await fetch('https://api.upbit.com/v1/ticker?markets=KRW-USDT');
+      if(!res.ok) throw new Error('upbit http '+res.status);
+      const d = (await res.json())[0];
+      fxRate = d.trade_price;
+      fxChangeRate = d.signed_change_rate * 100;
+      fxSource = 'Upbit KRW-USDT'; fxManual = false;
+      saveStoredFx(fxRate);
+      return;
+    }catch(e){ /* fall through */ }
+    // 2) public forex API fallback (daily-ish rate, no live change)
+    try{
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      if(!res.ok) throw new Error('erapi http '+res.status);
+      const d = await res.json();
+      if (d && d.rates && d.rates.KRW){
+        fxRate = d.rates.KRW; fxChangeRate = null;
+        fxSource = '공개 환율 API (일 단위)'; fxManual = false;
+        saveStoredFx(fxRate);
+        return;
+      }
+      throw new Error('no KRW rate');
+    }catch(e){ /* fall through */ }
+    // 3) last stored, else null (manual input required)
+    const stored = await loadStoredFx();
+    if (stored){ fxRate = stored; fxChangeRate = null; fxSource='마지막 저장값 (오프라인)'; fxManual = true; }
+    else { fxSource = '환율 조회 실패 — 직접 입력 필요'; fxManual = true; }
+  }
+
+  function renderFx(){
+    const valEl = document.getElementById('fxValue');
+    const chEl = document.getElementById('fxChange');
+    const srcEl = document.getElementById('fxSource');
+    if (fxRate){
+      valEl.textContent = fmtKRW(fxRate);
+      if (fxChangeRate!==null){
+        const up = fxChangeRate>0, down = fxChangeRate<0;
+        chEl.textContent = (up?'+':'') + fxChangeRate.toFixed(2) + '%';
+        chEl.className = 'fx-change ' + (up?'up':down?'down':'flat');
+      } else { chEl.textContent=''; chEl.className='fx-change flat'; }
+    } else {
+      valEl.textContent = '- (수동 입력 필요)';
+    }
+    srcEl.textContent = fxSource;
+    srcEl.className = 'fx-source' + (fxManual ? ' fx-stale' : '');
+  }
+
+  /* ---------- Ticker / kline fetchers ---------- */
+  async function refreshTicker(symbol){
+    const res = await fetch(`${API_BASE}/ticker/24hr?symbol=${symbol}`);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const d = await res.json();
+    return {
+      price: parseFloat(d.lastPrice), changePct: parseFloat(d.priceChangePercent),
+      high: parseFloat(d.highPrice), low: parseFloat(d.lowPrice)
+    };
+  }
+  async function refreshKlines(symbol){
+    const res = await fetch(`${API_BASE}/klines?symbol=${symbol}&interval=15m&limit=96`);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const rows = await res.json();
+    return rows.map(r=>parseFloat(r[4]));
+  }
+  async function refreshFunding(symbol){
+    const res = await fetch(`${API_BASE}/premiumIndex?symbol=${symbol}`);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const d = await res.json();
+    return parseFloat(d.lastFundingRate);
+  }
+
+  function ensureBodyMarkup(inst){
+    if (!document.getElementById('price-'+inst.symbol)){
+      document.getElementById('body-'+inst.symbol).innerHTML = cardBodyTemplate(inst);
+      wireBaselineInput(inst.symbol);
+    }
+  }
+
+  function renderCard(inst, data){
+    const symbol = inst.symbol, s = state[symbol];
+    document.getElementById('dot-'+symbol).className = 'status-dot ok';
+    ensureBodyMarkup(inst);
+
+    if (data.price!==undefined) s.lastPrice = data.price;
+    if (data.changePct!==undefined) s.changePct = data.changePct;
+    if (data.high!==undefined) s.high = data.high;
+    if (data.low!==undefined) s.low = data.low;
+    if (data.closes) s.closes = data.closes;
+
+    // main price + comparison
+    const priceEl = document.getElementById('price-'+symbol);
+    const subEl = document.getElementById('priceSub-'+symbol);
+    const compareEl = document.getElementById('compareContent-'+symbol);
+
+    if (inst.market==='KRX'){
+      if (fxRate && s.lastPrice!=null){
+        const krw = s.lastPrice * fxRate;
+        priceEl.textContent = fmtKRW(krw);
+        subEl.textContent = '≈ ' + fmtUSD(s.lastPrice) + ' USDT (바이낸스 원가)';
+        renderCompare(compareEl, krw, s.baseline, fmtKRW);
+      } else {
+        priceEl.textContent = fmtUSD(s.lastPrice) + ' USDT';
+        subEl.textContent = '환율 대기 중 — 상단에서 환율을 확인하세요';
+        compareEl.innerHTML = '<span class="compare-empty">환율이 없어 원화 비교를 계산할 수 없어요</span>';
+      }
+    } else if (inst.market==='NASDAQ'){
+      priceEl.textContent = fmtUSD(s.lastPrice);
+      subEl.textContent = fxRate ? ('≈ ' + fmtKRW(s.lastPrice*fxRate)) : '바이낸스 무기한선물 원가';
+      renderCompare(compareEl, s.lastPrice, s.baseline, fmtUSD);
+    } else {
+      priceEl.textContent = fmtUSD(s.lastPrice);
+      subEl.textContent = fxRate ? ('≈ ' + fmtKRW(s.lastPrice*fxRate)) : '바이낸스 무기한선물 원가';
+      compareEl.innerHTML = '<span class="compare-empty">비상장 기업이라 비교할 공식 종가가 없어요</span>';
+    }
+
+    // 24h change badge (from Binance ticker, independent of baseline)
+    const ch24 = document.getElementById('change24-'+symbol);
+    if (ch24 && s.changePct!=null){
+      const up = s.changePct>0, down = s.changePct<0;
+      ch24.textContent = '24h ' + (up?'+':'') + s.changePct.toFixed(2) + '%';
+      ch24.className = 'change24-badge ' + (up?'up':down?'down':'flat');
+    }
+
+    if (s.high!=null) document.getElementById('hi-'+symbol).textContent = fmtRaw(s.high);
+    if (s.low!=null) document.getElementById('lo-'+symbol).textContent = fmtRaw(s.low);
+
+    if (s.closes && s.closes.length>1){
+      const up = s.closes[s.closes.length-1] >= s.closes[0];
+      const canvas = document.getElementById('spark-'+symbol);
+      if (canvas) drawSparkline(canvas, s.closes, up);
+    }
+    s.updatedAt = Date.now(); s.ok = true;
+    const ageEl = document.getElementById('age-'+symbol);
+    if (ageEl) ageEl.textContent = timeAgo(s.updatedAt);
+
+    renderMiniSentiment(document.getElementById('sentimentMini-'+symbol), symbol);
+  }
+
+  function renderCompare(container, current, baseline, fmt){
+    if (baseline==null || isNaN(baseline) || baseline<=0){
+      container.innerHTML = '<span class="compare-empty">기준 종가를 입력하면 비교가 표시돼요</span>';
+      return;
+    }
+    const delta = current - baseline;
+    const pct = (delta/baseline)*100;
+    const up = delta>0, down = delta<0;
+    const cls = up?'up':down?'down':'flat';
+    container.innerHTML = `
+      <div class="compare-row">
+        <span class="compare-delta ${cls}">${up?'▲':down?'▼':'－'} ${fmt(Math.abs(delta))}</span>
+        <span class="compare-pct ${cls}">${up?'+':''}${pct.toFixed(2)}%</span>
+      </div>`;
+  }
+
+  function renderError(symbol, msg){
+    const s = state[symbol];
+    s.ok = false;
+    document.getElementById('dot-'+symbol).className = 'status-dot err';
+    document.getElementById('body-'+symbol).innerHTML = `
+      <div class="card-error">
+        데이터를 불러오지 못했습니다.
+        <small>${msg} — 지역 제한 또는 일시적 네트워크 문제일 수 있어요.</small>
+      </div>`;
+  }
+
+  function wireBaselineInput(symbol){
+    const btn = document.querySelector(`[data-save="${symbol}"]`);
+    if (!btn) return;
+    btn.addEventListener('click', ()=>{
+      const input = document.getElementById('baseline-'+symbol);
+      const v = parseFloat(input.value);
+      if (!isNaN(v) && v>0){
+        state[symbol].baseline = v;
+        saveBaseline(symbol, v);
+        const inst = INSTRUMENTS.find(i=>i.symbol===symbol);
+        refreshOne(inst, false);
+      }
+    });
+  }
+
+  async function refreshOne(inst, withKlines){
+    const symbol = inst.symbol;
+    try{
+      const t = await refreshTicker(symbol);
+      let closes;
+      if (withKlines){
+        try { closes = await refreshKlines(symbol); } catch(e){}
+        try { state[symbol].fundingRate = await refreshFunding(symbol); } catch(e){}
+      }
+      renderCard(inst, { ...t, closes });
+    }catch(e){
+      renderError(symbol, e.message || 'fetch error');
+    }
+  }
+
+  let lastFxFetch = 0, refreshing = false;
+  async function refreshAll(withKlines){
+    if (refreshing) return; // avoid stacking overlapping calls at fast (1s) intervals
+    refreshing = true;
+    try{
+      if (Date.now()-lastFxFetch > 5000){
+        await fetchFx(); renderFx(); lastFxFetch = Date.now();
+      }
+      await Promise.allSettled(INSTRUMENTS.map(i=>refreshOne(i, withKlines)));
+    } finally {
+      refreshing = false;
+    }
+  }
+
+  /* ---------- Session pulse + market pills ---------- */
+  function getZonedNow(tz){
+    const fmt = new Intl.DateTimeFormat('en-US',{ timeZone:tz, weekday:'short', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false });
+    const parts = fmt.formatToParts(new Date());
+    const map = {}; parts.forEach(p=>map[p.type]=p.value);
+    const wd = {Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[map.weekday];
+    let hour = parseInt(map.hour,10); if(hour===24) hour=0;
+    return { weekday:wd, hourDec: hour + parseInt(map.minute,10)/60 + parseInt(map.second,10)/3600 };
+  }
+  function isOpen(now, openDec, closeDec){
+    if (now.weekday===0 || now.weekday===6) return false;
+    return now.hourDec>=openDec && now.hourDec<closeDec;
+  }
+  function isHourShaded(h, openH, closeH){
+    if (openH < closeH) return h>=openH && h<closeH;
+    return h>=openH || h<closeH;
+  }
+  function buildTrack(elId, openFn){
+    const track = document.getElementById(elId); track.innerHTML = '';
+    for (let h=0; h<24; h++){
+      const cell = document.createElement('div');
+      cell.className = 'pulse-cell' + (openFn(h) ? ' open' : '');
+      track.appendChild(cell);
+    }
+  }
+
+  function renderPulse(){
+    const seoul = getZonedNow('Asia/Seoul');
+    const ny = getZonedNow('America/New_York');
+    const krxOpenNow = isOpen(seoul, 9.0, 15.5);
+    const nasdaqOpenNow = isOpen(ny, 9.5, 16.0);
+    const krxWeekday = seoul.weekday>=1 && seoul.weekday<=5;
+    const nasdaqWeekday = ny.weekday>=1 && ny.weekday<=5;
+
+    let offset = Math.round(seoul.hourDec - ny.hourDec);
+    if (offset < 0) offset += 24;
+    const nasdaqOpenKST = Math.floor((9.5+offset) % 24);
+    const nasdaqCloseKST = Math.floor((16+offset) % 24);
+
+    buildTrack('trackKRX', h => krxWeekday && isHourShaded(h, 9, 16));
+    buildTrack('trackNASDAQ', h => nasdaqWeekday && isHourShaded(h, nasdaqOpenKST, nasdaqCloseKST));
+    buildTrack('trackPERP', () => true);
+
+    document.querySelectorAll('.now-marker').forEach(n=>n.remove());
+    const pct = (seoul.hourDec/24*100).toFixed(2) + '%';
+    ['trackKRX','trackNASDAQ','trackPERP'].forEach(id=>{
+      const marker = document.createElement('div');
+      marker.className = 'now-marker'; marker.style.left = pct;
+      document.getElementById(id).appendChild(marker);
+    });
+
+    const statusKRX = document.getElementById('statusKRX');
+    statusKRX.textContent = krxOpenNow ? 'OPEN' : 'CLOSED';
+    statusKRX.className = 'pulse-status ' + (krxOpenNow?'open':'closed');
+    const statusNASDAQ = document.getElementById('statusNASDAQ');
+    statusNASDAQ.textContent = nasdaqOpenNow ? 'OPEN' : 'CLOSED';
+    statusNASDAQ.className = 'pulse-status ' + (nasdaqOpenNow?'open':'closed');
+
+    document.getElementById('weekendTag').classList.toggle('show', seoul.weekday===0 || seoul.weekday===6);
+
+    document.getElementById('pulseFoot').innerHTML =
+      `<b>KRX</b> 09:00–15:30 (KST, 월~금) · <b>NASDAQ</b> 09:30–16:00 (ET, 월~금 · 현재 KST ${String(nasdaqOpenKST).padStart(2,'0')}:xx–${String(nasdaqCloseKST).padStart(2,'0')}:xx 환산) · <b>Binance Perp</b> 연중무휴 24시간`;
+
+    // update per-card market pills
+    INSTRUMENTS.forEach(inst=>{
+      const pill = document.getElementById('mkt-'+inst.symbol);
+      if (!pill) return;
+      if (inst.market==='KRX'){ pill.textContent = krxOpenNow?'국내장중':'국내장마감'; pill.className='mkt-pill'+(krxOpenNow?' open':''); }
+      else if (inst.market==='NASDAQ'){ pill.textContent = nasdaqOpenNow?'나스닥장중':'나스닥마감'; pill.className='mkt-pill'+(nasdaqOpenNow?' open':''); }
+      else { pill.textContent='비상장'; pill.className='mkt-pill'; }
+    });
+
+    const now = new Date();
+    document.getElementById('clockKST').textContent = new Intl.DateTimeFormat('ko-KR',{ timeZone:'Asia/Seoul', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).format(now);
+    document.getElementById('dateKST').textContent = new Intl.DateTimeFormat('ko-KR',{ timeZone:'Asia/Seoul', year:'numeric', month:'long', day:'numeric', weekday:'long' }).format(now) + ' · KST';
+  }
+
+  function tickAges(){
+    INSTRUMENTS.forEach(i=>{
+      const ageEl = document.getElementById('age-'+i.symbol);
+      if (ageEl && state[i.symbol].updatedAt) ageEl.textContent = timeAgo(state[i.symbol].updatedAt);
+    });
+  }
+
+  /* ---------- Community board ---------- */
+  let activeBoardSymbol = INSTRUMENTS[0].symbol;
+  let boardPollTimer = null;
+  let mockLoggedIn = false;
+
+  async function loadMockLogin(){
+    if (!hasStorage()) return false;
+    try{ const r = await window.storage.get('mockLoggedIn', false); return r ? r.value==='true' : false; }catch(e){ return false; }
+  }
+  async function saveMockLogin(v){
+    if (!hasStorage()) return;
+    try{ await window.storage.set('mockLoggedIn', String(v), false); }catch(e){}
+  }
+  function updateBoardGateUI(){
+    document.getElementById('boardGate').style.display = mockLoggedIn ? 'none' : '';
+    document.getElementById('boardContent').style.display = mockLoggedIn ? '' : 'none';
+    document.getElementById('logoutMockBtn').style.display = mockLoggedIn ? '' : 'none';
+  }
+
+  async function loadNick(){
+    if (!hasStorage()) return '';
+    try{ const r = await window.storage.get('myNick', false); return r ? r.value : ''; }catch(e){ return ''; }
+  }
+  async function saveNick(v){
+    if (!hasStorage()) return;
+    try{ await window.storage.set('myNick', v, false); }catch(e){}
+  }
+  async function fetchPosts(symbol){
+    if (!hasStorage()) return (state[symbol].localPosts || []);
+    try{
+      const r = await window.storage.get('board:'+symbol, true);
+      return r && r.value ? JSON.parse(r.value) : [];
+    }catch(e){ return []; }
+  }
+  async function savePosts(symbol, posts){
+    const trimmed = posts.slice(-200);
+    if (!hasStorage()){ state[symbol].localPosts = trimmed; return; }
+    try{ await window.storage.set('board:'+symbol, JSON.stringify(trimmed), true); }catch(e){}
+  }
+
+  function buildBoardTabs(){
+    const wrap = document.getElementById('boardTabs');
+    wrap.innerHTML = '';
+    INSTRUMENTS.forEach(inst=>{
+      const btn = document.createElement('button');
+      btn.className = 'board-tab' + (inst.symbol===activeBoardSymbol ? ' active' : '');
+      btn.textContent = inst.nameKo;
+      btn.addEventListener('click', ()=>{
+        activeBoardSymbol = inst.symbol;
+        buildBoardTabs();
+        loadBoardData();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function boardTimeAgo(ts){
+    const s = Math.max(0, Math.floor((Date.now()-ts)/1000));
+    if (s<60) return s+'초 전';
+    if (s<3600) return Math.floor(s/60)+'분 전';
+    if (s<86400) return Math.floor(s/3600)+'시간 전';
+    return Math.floor(s/86400)+'일 전';
+  }
+
+  /* ---------- Sentiment aggregation (shared by card mini + board panel) ---------- */
+  function computeSentimentStats(posts, days){
+    const cutoff = Date.now() - days*24*60*60*1000;
+    const recent = (posts||[]).filter(p=>p.ts>=cutoff);
+    const counts = { buy:0, neutral:0, sell:0 };
+    recent.forEach(p=>{ counts[p.sentiment==='buy'?'buy':p.sentiment==='sell'?'sell':'neutral']++; });
+    return { buy:counts.buy, neutral:counts.neutral, sell:counts.sell, total:recent.length };
+  }
+  function dominantSentiment(stats){
+    if (stats.total===0) return null;
+    if (stats.buy>=stats.sell && stats.buy>=stats.neutral) return 'buy';
+    if (stats.sell>=stats.buy && stats.sell>=stats.neutral) return 'sell';
+    return 'neutral';
+  }
+  function renderMiniSentiment(el, symbol){
+    if (!el) return;
+    const s = state[symbol];
+    const stats = s.boardStats;
+
+    let boardHtml = '<div class="sentiment-mini-label">게시판 심리 불러오는 중…</div>';
+    if (stats){
+      if (stats.total===0){
+        boardHtml = '<div class="sentiment-mini-label">24h 게시판 의견 없음</div>';
+      } else {
+        const buyPct = stats.buy/stats.total*100, neuPct = stats.neutral/stats.total*100, sellPct = stats.sell/stats.total*100;
+        const dom = dominantSentiment(stats);
+        const domLabel = dom==='buy' ? '매수 우세' : dom==='sell' ? '매도 우세' : '중립 우세';
+        boardHtml = `
+          <div class="sentiment-mini-bar">
+            <div class="seg-buy" style="width:${buyPct}%"></div>
+            <div class="seg-neutral" style="width:${neuPct}%"></div>
+            <div class="seg-sell" style="width:${sellPct}%"></div>
+          </div>
+          <div class="sentiment-mini-label ${dom}">게시판(24h) <b>${domLabel}</b> · 매수${stats.buy} 중립${stats.neutral} 매도${stats.sell}</div>`;
+      }
+    }
+
+    const indicator = computeIndicator(symbol);
+    let indicatorHtml = '';
+    if (indicator!==null){
+      const cls = indicator>0.15 ? 'up' : indicator<-0.15 ? 'down' : 'flat';
+      const label = cls==='up' ? '상승 우세' : cls==='down' ? '하락 우세' : '중립';
+      const fillStyle = cls==='flat' ? '' : `width:${Math.min(50,Math.abs(indicator)*50)}%`;
+      indicatorHtml = `
+        <div class="indicator-row">
+          <div class="indicator-track">
+            <div class="indicator-zero"></div>
+            <div class="indicator-fill ${cls}" style="${fillStyle}"></div>
+          </div>
+          <div class="indicator-label ${cls}">${label}</div>
+        </div>
+        <div class="indicator-caption">참고용 지표 · 예측 아님 · 모멘텀+펀딩비+게시판 종합</div>`;
+    }
+
+    el.innerHTML = boardHtml + indicatorHtml;
+  }
+
+  /* ---------- Reference indicator (NOT a prediction — see disclaimer) ---------- */
+  function computeIndicator(symbol){
+    const s = state[symbol];
+    const parts = [];
+    if (s.changePct!=null) parts.push(Math.max(-1, Math.min(1, s.changePct/5)));               // ±5% 24h move → full scale
+    if (s.fundingRate!=null) parts.push(Math.max(-1, Math.min(1, s.fundingRate/0.0005)));       // ±0.05% funding → full scale
+    if (s.boardStats && s.boardStats.total>0) parts.push((s.boardStats.buy - s.boardStats.sell)/s.boardStats.total);
+    if (!parts.length) return null;
+    return parts.reduce((a,b)=>a+b,0)/parts.length;
+  }
+
+  function periodLabelFor(days){ return days===1 ? '오늘(24h)' : days===7 ? '이번주(7일)' : '이번달(30일)'; }
+  function renderSentimentPanel(el, stats, periodLabel){
+    if (!el) return;
+    if (stats.total===0){
+      el.innerHTML = `<div class="sentiment-empty">${periodLabel} 동안 등록된 의견이 없어요</div>`;
+      return;
+    }
+    const rows = [ {key:'buy',label:'매수',count:stats.buy}, {key:'neutral',label:'중립',count:stats.neutral}, {key:'sell',label:'매도',count:stats.sell} ];
+    const bars = rows.map(r=>{
+      const pct = r.count/stats.total*100;
+      return `
+        <div class="sentiment-bar-row">
+          <span class="sentiment-bar-label ${r.key}">${r.label}</span>
+          <div class="sentiment-bar-track"><div class="sentiment-bar-fill ${r.key}" style="width:${pct}%"></div></div>
+          <span class="sentiment-bar-pct">${pct.toFixed(0)}% (${r.count})</span>
+        </div>`;
+    }).join('');
+    const dom = dominantSentiment(stats);
+    const domLabel = dom==='buy' ? '매수' : dom==='sell' ? '매도' : '중립';
+    el.innerHTML = `<div class="sentiment-bars">${bars}</div><div class="sentiment-dominant ${dom}">${periodLabel} 총 ${stats.total}건 · <b>${domLabel}</b> 심리 우세</div>`;
+  }
+  async function refreshCardSentiment(inst){
+    const posts = await fetchPosts(inst.symbol);
+    state[inst.symbol].boardStats = computeSentimentStats(posts, 1);
+    renderMiniSentiment(document.getElementById('sentimentMini-'+inst.symbol), inst.symbol);
+  }
+  async function refreshAllCardSentiments(){
+    await Promise.allSettled(INSTRUMENTS.map(refreshCardSentiment));
+  }
+
+  let currentBoardPosts = [];
+  let activeBoardPeriodDays = 1;
+
+  function renderPostList(){
+    const listEl = document.getElementById('boardList');
+    if (!currentBoardPosts.length){
+      listEl.innerHTML = '<div class="board-empty">아직 의견이 없어요. 첫 글을 남겨보세요.</div>';
+      return;
+    }
+    listEl.innerHTML = currentBoardPosts.slice().reverse().map(p=>{
+      const sentLabel = p.sentiment==='buy' ? '매수' : p.sentiment==='sell' ? '매도' : '중립';
+      const nick = (p.nick || '익명').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const text = (p.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `
+        <div class="board-post${p.reported ? ' reported' : ''}">
+          <div class="board-post-head">
+            <span class="board-nick">${nick}</span>
+            <span class="board-sentiment ${p.sentiment||'neutral'}">${sentLabel}</span>
+            ${p.reported ? '<span class="reported-badge">신고됨</span>' : ''}
+            <span class="head-spacer"></span>
+            <span class="board-time">${boardTimeAgo(p.ts)}</span>
+            <button class="report-btn" data-report-id="${p.id}">🚩 신고</button>
+          </div>
+          <div class="board-text">${text}</div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderSentimentSummary(){
+    const stats = computeSentimentStats(currentBoardPosts, activeBoardPeriodDays);
+    renderSentimentPanel(document.getElementById('sentimentSummary'), stats, periodLabelFor(activeBoardPeriodDays));
+  }
+
+  function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+  let toastTimer = null;
+  function showToast(msg){
+    let el = document.getElementById('toastEl');
+    if (!el){ el = document.createElement('div'); el.id = 'toastEl'; el.className = 'toast'; document.body.appendChild(el); }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>el.classList.remove('show'), 2800);
+  }
+
+  async function handleReport(id){
+    const post = currentBoardPosts.find(p=>p.id===id);
+    if (!post) return;
+    post.reported = true;
+    await savePosts(activeBoardSymbol, currentBoardPosts);
+    showToast('신고 접수 (미리보기) — 실제 연동 후 운영자 이메일로 전달되고, 운영자가 삭제할 수 있어요');
+    renderPostList();
+  }
+
+  async function loadBoardData(){
+    document.getElementById('boardList').innerHTML = '<div class="board-empty">불러오는 중…</div>';
+    const inst = INSTRUMENTS.find(i=>i.symbol===activeBoardSymbol);
+    document.getElementById('sentimentPanelSymbol').textContent = inst ? inst.nameKo : '';
+    currentBoardPosts = await fetchPosts(activeBoardSymbol);
+    renderPostList();
+    renderSentimentSummary();
+  }
+
+  async function submitPost(){
+    const textEl = document.getElementById('boardText');
+    const text = textEl.value.trim();
+    if (!text) return;
+    const nickEl = document.getElementById('boardNick');
+    const nick = nickEl.value.trim() || '익명';
+    const sentiment = document.getElementById('boardSentiment').value;
+    saveNick(nick);
+    const posts = await fetchPosts(activeBoardSymbol);
+    posts.push({ id: genId(), nick, sentiment, text, ts: Date.now(), reported:false });
+    await savePosts(activeBoardSymbol, posts);
+    textEl.value = '';
+    await loadBoardData();
+    const inst = INSTRUMENTS.find(i=>i.symbol===activeBoardSymbol);
+    if (inst) refreshCardSentiment(inst);
+  }
+
+  async function initBoard(){
+    buildBoardTabs();
+    const nick = await loadNick();
+    if (nick) document.getElementById('boardNick').value = nick;
+    document.getElementById('boardScope').textContent = hasStorage()
+      ? '이 화면을 여는 모든 사람과 공유돼요'
+      : '이 브라우저 세션에만 저장돼요 (아티팩트로 열면 다른 사람과 공유돼요)';
+    document.getElementById('boardNote').textContent = hasStorage()
+      ? ''
+      : '※ 파일을 직접 다운로드해서 열면 새로고침 시 글이 사라져요. Claude 아티팩트로 열어야 계속 저장/공유됩니다.';
+    document.getElementById('boardSubmit').addEventListener('click', submitPost);
+    document.getElementById('boardText').addEventListener('keydown', (e)=>{
+      if (e.key==='Enter' && (e.metaKey||e.ctrlKey)) submitPost();
+    });
+    document.querySelectorAll('.period-tab').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        activeBoardPeriodDays = parseInt(btn.dataset.period,10);
+        document.querySelectorAll('.period-tab').forEach(b=>b.classList.toggle('active', b===btn));
+        renderSentimentSummary();
+      });
+    });
+    mockLoggedIn = await loadMockLogin();
+    updateBoardGateUI();
+    document.getElementById('loginKakaoBtn').addEventListener('click', ()=>{
+      mockLoggedIn = true; saveMockLogin(true); updateBoardGateUI();
+      showToast('카카오 로그인 미리보기 — 실제 인증은 Firebase 연동 후 연결돼요');
+    });
+    document.getElementById('loginAppleBtn').addEventListener('click', ()=>{
+      mockLoggedIn = true; saveMockLogin(true); updateBoardGateUI();
+      showToast('Apple 로그인 미리보기 — 실제 인증은 Firebase 연동 후 연결돼요');
+    });
+    document.getElementById('logoutMockBtn').addEventListener('click', ()=>{
+      mockLoggedIn = false; saveMockLogin(false); updateBoardGateUI();
+      showToast('로그아웃(미리보기) — 게시판이 다시 잠겼어요');
+    });
+    document.getElementById('boardList').addEventListener('click', (e)=>{
+      const btn = e.target.closest('.report-btn');
+      if (!btn) return;
+      handleReport(btn.dataset.reportId);
+    });
+    await loadBoardData();
+    await refreshAllCardSentiments();
+    if (boardPollTimer) clearInterval(boardPollTimer);
+    boardPollTimer = setInterval(()=>{ loadBoardData(); refreshAllCardSentiments(); }, 20000);
+  }
+
+  /* ---------- Auto refresh loop ---------- */
+  let autoTimer = null, klineCounter = 0;
+  function startLoop(){
+    if (autoTimer) clearInterval(autoTimer);
+    const interval = parseInt(document.getElementById('intervalSelect').value,10);
+    autoTimer = setInterval(()=>{
+      klineCounter++;
+      const withKlines = (klineCounter % Math.max(1, Math.round(60000/interval)) === 0) || klineCounter===1;
+      refreshAll(withKlines);
+    }, interval);
+  }
+
+  document.getElementById('intervalSelect').addEventListener('change', startLoop);
+  document.getElementById('refreshBtn').addEventListener('click', ()=>refreshAll(true));
+  document.getElementById('fxManualBtn').addEventListener('click', ()=>{
+    const v = parseFloat(document.getElementById('fxManualInput').value);
+    if (!isNaN(v) && v>0){
+      fxRate = v; fxChangeRate = null; fxSource = '수동 입력값'; fxManual = true;
+      saveStoredFx(v); renderFx();
+      INSTRUMENTS.forEach(inst => refreshOne(inst, false));
+    }
+  });
+
+  /* ---------- Init ---------- */
+  async function init(){
+    buildCards();
+    for (const inst of INSTRUMENTS){
+      if (inst.market!=='PREIPO'){
+        state[inst.symbol].baseline = await loadBaseline(inst.symbol, inst.baseDefault);
+        const input = document.getElementById('baseline-'+inst.symbol);
+        if (input) input.value = state[inst.symbol].baseline ?? '';
+        wireBaselineInput(inst.symbol);
+      }
+    }
+    renderPulse();
+    await refreshAll(true);
+    startLoop();
+    initBoard();
+    setInterval(renderPulse, 1000);
+    setInterval(tickAges, 1000);
+  }
+  init();
+
+  window.addEventListener('resize', ()=>{
+    INSTRUMENTS.forEach(i=>{
+      const s = state[i.symbol];
+      if (s.closes && s.closes.length>1){
+        const canvas = document.getElementById('spark-'+i.symbol);
+        if (canvas) drawSparkline(canvas, s.closes, s.closes[s.closes.length-1] >= s.closes[0]);
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
