@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
 <style>
   :root{
     --bg:#0B0E12;
@@ -223,12 +226,11 @@
     border:1px solid var(--border); background:var(--panel-2); color:var(--text-dim); cursor:pointer;
   }
   .board-tab.active{ border-color:var(--copper); color:var(--copper); background:var(--copper-dim); }
-  .board-form{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
-  .board-form input[type=text]{
-    background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
-    font-family:var(--font-body); font-size:12.5px; padding:8px 10px;
+  .board-form{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:14px; }
+  .board-form-user{
+    font-family:var(--font-mono); font-size:11.5px; color:var(--copper); padding:8px 10px;
+    background:var(--copper-dim); border-radius:8px; white-space:nowrap;
   }
-  .board-form input#boardNick{ width:120px; }
   .board-form select{ padding:8px 10px; }
   .board-form textarea{
     flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
@@ -250,12 +252,12 @@
   .board-text{ font-size:12.5px; color:var(--text); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
   .board-empty{ font-size:12px; color:var(--text-faint); padding:12px 0; text-align:center; }
   .board-note{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-top:10px; }
+  .admin-del-btn{ font-family:var(--font-mono); font-size:9.5px; color:var(--coral); background:none; border:1px solid var(--coral); border-radius:6px; padding:2px 7px; cursor:pointer; }
 
-  /* ---------- LOGIN MOCK (preview only — wired for real after Firebase step) ---------- */
+  /* ---------- LOGIN (Kakao) ---------- */
   .login-mock-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
   .login-btn{ font-family:var(--font-body); font-weight:600; font-size:12px; padding:8px 14px; border-radius:8px; border:none; cursor:pointer; }
   .login-btn.kakao{ background:#FEE500; color:#191600; }
-  .login-btn.apple{ background:#0a0a0a; color:#fff; border:1px solid #333; }
   .login-mock-note{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
   .logout-mock-btn{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); background:none; border:1px solid var(--border); border-radius:100px; padding:4px 10px; cursor:pointer; margin-left:auto; }
   .logout-mock-btn:hover{ color:var(--text); border-color:var(--text-dim); }
@@ -386,15 +388,14 @@
 
     <div class="login-mock-row">
       <button class="login-btn kakao" id="loginKakaoBtn">💬 카카오로 로그인</button>
-      <button class="login-btn apple" id="loginAppleBtn"> Apple로 로그인</button>
-      <span class="login-mock-note">※ 로그인 연동 전 미리보기예요</span>
-      <button class="logout-mock-btn" id="logoutMockBtn" style="display:none;">로그아웃 (미리보기)</button>
+      <span class="login-mock-note">로그인하면 카카오 닉네임으로 글이 등록돼요</span>
+      <button class="logout-mock-btn" id="logoutMockBtn" style="display:none;">로그아웃</button>
     </div>
 
     <div class="board-gate" id="boardGate">
       <div class="board-gate-icon">🔒</div>
       <div class="board-gate-title">종목 게시판은 로그인 후 이용할 수 있어요</div>
-      <div class="board-gate-sub">카카오 또는 Apple로 로그인하면 다른 사람들의 게시글과 심리 요약을 볼 수 있어요</div>
+      <div class="board-gate-sub">카카오로 로그인하면 다른 사람들의 게시글과 심리 요약을 볼 수 있어요</div>
     </div>
 
     <div id="boardContent" style="display:none;">
@@ -413,7 +414,7 @@
       </div>
 
       <div class="board-form">
-        <input type="text" id="boardNick" placeholder="닉네임">
+        <div class="board-form-user" id="boardFormUser"></div>
         <select id="boardSentiment">
           <option value="neutral">중립</option>
           <option value="buy">매수</option>
@@ -434,7 +435,7 @@
   </div>
 
   <div class="disclaimer">
-    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USDT/KRW 환율은 업비트 KRW-USDT 시세(실패 시 공개 환율 API)를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판은 로그인 후에만 게시글과 심리 요약을 볼 수 있도록 설계돼 있고(현재는 미리보기), 게시판 글은 로그인한 모든 이용자에게 공개·공유될 수 있습니다 — 개인정보나 민감한 내용은 남기지 마세요. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. 카카오/Apple 로그인 버튼과 신고 버튼은 현재 <b>미리보기</b>이며, 실제 인증·이메일 알림·운영자 삭제 권한은 Firebase 연동 이후 작동합니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
+    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USDT/KRW 환율은 업비트 KRW-USDT 시세(실패 시 공개 환율 API)를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판은 카카오 로그인 후에만 게시글과 심리 요약을 볼 수 있고, 작성한 글은 로그인한 모든 이용자에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
   </div>
 
 </div>
@@ -442,6 +443,26 @@
 <script>
 (function(){
   const API_BASE = 'https://fapi.binance.com/fapi/v1';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBA76ApMYwfRhxMuYDOAwViPbELf3Wblps",
+    authDomain: "weekend-desk.firebaseapp.com",
+    projectId: "weekend-desk",
+    storageBucket: "weekend-desk.firebasestorage.app",
+    messagingSenderId: "12808223208",
+    appId: "1:12808223208:web:842919cacdd481cda30c5d",
+    measurementId: "G-Y58NGV69B2"
+  };
+  let db = null;
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+  }catch(e){ console.error('Firebase init failed', e); }
+
+  try{ Kakao.init('e89918356c290450a1fbf172804f43b6'); }catch(e){ console.error('Kakao init failed', e); }
+
+  // Siro의 카카오 ID가 확인되면 여기 채워주세요 — 그래야 게시글 삭제 버튼이 보여요.
+  const ADMIN_KAKAO_IDS = [];
 
   // baselineDefault is a *seed* value only — real defaults should be refreshed by the user each trading day.
   const INSTRUMENTS = [
@@ -456,29 +477,39 @@
   const state = {}; // symbol -> { closes, ok, updatedAt, lastPrice, high, low, changePct, baseline }
   let fxRate = null, fxChangeRate = null, fxSource = 'loading', fxManual = false;
 
-  const hasStorage = () => (typeof window!=='undefined' && window.storage && typeof window.storage.get==='function');
+  const hasLocalStorage = () => { try{ return typeof window!=='undefined' && !!window.localStorage; }catch(e){ return false; } };
 
-  /* ---------- Persistence helpers ---------- */
-  async function loadBaseline(symbol, fallback){
-    if (hasStorage()){
-      try{
-        const r = await window.storage.get('baseline:'+symbol, false);
-        if (r && r.value!=null && r.value!=='') return parseFloat(r.value);
-      }catch(e){ /* key not found or storage unavailable — use fallback */ }
-    }
-    return fallback;
+  /* ---------- Persistence helpers (localStorage — personal, per-browser) ---------- */
+  function loadBaseline(symbol, fallback){
+    if (!hasLocalStorage()) return fallback;
+    try{
+      const v = localStorage.getItem('wd_baseline_'+symbol);
+      return (v!=null && v!=='') ? parseFloat(v) : fallback;
+    }catch(e){ return fallback; }
   }
-  async function saveBaseline(symbol, value){
-    if (!hasStorage()) return;
-    try{ await window.storage.set('baseline:'+symbol, String(value), false); }catch(e){}
+  function saveBaseline(symbol, value){
+    if (!hasLocalStorage()) return;
+    try{ localStorage.setItem('wd_baseline_'+symbol, String(value)); }catch(e){}
   }
-  async function loadStoredFx(){
-    if (!hasStorage()) return null;
-    try{ const r = await window.storage.get('fxRate:last', false); return r ? parseFloat(r.value) : null; }catch(e){ return null; }
+  function loadStoredFx(){
+    if (!hasLocalStorage()) return null;
+    try{ const v = localStorage.getItem('wd_fxRate_last'); return v ? parseFloat(v) : null; }catch(e){ return null; }
   }
-  async function saveStoredFx(v){
-    if (!hasStorage()) return;
-    try{ await window.storage.set('fxRate:last', String(v), false); }catch(e){}
+  function saveStoredFx(v){
+    if (!hasLocalStorage()) return;
+    try{ localStorage.setItem('wd_fxRate_last', String(v)); }catch(e){}
+  }
+  function loadSession(){
+    if (!hasLocalStorage()) return null;
+    try{ const raw = localStorage.getItem('wd_session'); return raw ? JSON.parse(raw) : null; }catch(e){ return null; }
+  }
+  function saveSession(user){
+    if (!hasLocalStorage()) return;
+    try{ localStorage.setItem('wd_session', JSON.stringify(user)); }catch(e){}
+  }
+  function clearSession(){
+    if (!hasLocalStorage()) return;
+    try{ localStorage.removeItem('wd_session'); }catch(e){}
   }
 
   /* ---------- Build cards ---------- */
@@ -875,41 +906,54 @@
   /* ---------- Community board ---------- */
   let activeBoardSymbol = INSTRUMENTS[0].symbol;
   let boardPollTimer = null;
-  let mockLoggedIn = false;
+  let loggedIn = false;
+  let currentUser = null; // { id, nick }
 
-  async function loadMockLogin(){
-    if (!hasStorage()) return false;
-    try{ const r = await window.storage.get('mockLoggedIn', false); return r ? r.value==='true' : false; }catch(e){ return false; }
+  function kakaoLogin(){
+    if (!window.Kakao || !Kakao.Auth){ showToast('카카오 로그인 준비 중이에요. 새로고침 후 다시 시도해주세요'); return; }
+    Kakao.Auth.login({
+      success: function(){
+        Kakao.API.request({
+          url: '/v2/user/me',
+          success: function(res){
+            const nickname = (res.kakao_account && res.kakao_account.profile && res.kakao_account.profile.nickname) || '카카오유저';
+            currentUser = { id: res.id, nick: nickname };
+            saveSession(currentUser);
+            loggedIn = true;
+            updateBoardGateUI();
+            showToast(nickname + '님, 로그인됐어요');
+            if (!ADMIN_KAKAO_IDS.includes(currentUser.id)){
+              console.log('[weekend-desk] 내 카카오 ID:', currentUser.id, '— 관리자 권한이 필요하면 이 값을 전달하세요.');
+            }
+          },
+          fail: function(){ showToast('사용자 정보를 가져오지 못했어요'); }
+        });
+      },
+      fail: function(){ showToast('카카오 로그인에 실패했어요'); }
+    });
   }
-  async function saveMockLogin(v){
-    if (!hasStorage()) return;
-    try{ await window.storage.set('mockLoggedIn', String(v), false); }catch(e){}
+  function kakaoLogout(){
+    try{ Kakao.Auth.logout(); }catch(e){}
+    clearSession();
+    currentUser = null;
+    loggedIn = false;
+    updateBoardGateUI();
+    showToast('로그아웃 됐어요');
   }
   function updateBoardGateUI(){
-    document.getElementById('boardGate').style.display = mockLoggedIn ? 'none' : '';
-    document.getElementById('boardContent').style.display = mockLoggedIn ? '' : 'none';
-    document.getElementById('logoutMockBtn').style.display = mockLoggedIn ? '' : 'none';
+    document.getElementById('boardGate').style.display = loggedIn ? 'none' : '';
+    document.getElementById('boardContent').style.display = loggedIn ? '' : 'none';
+    document.getElementById('logoutMockBtn').style.display = loggedIn ? '' : 'none';
+    const userEl = document.getElementById('boardFormUser');
+    if (userEl) userEl.textContent = currentUser ? (currentUser.nick + '님으로 작성') : '';
   }
 
-  async function loadNick(){
-    if (!hasStorage()) return '';
-    try{ const r = await window.storage.get('myNick', false); return r ? r.value : ''; }catch(e){ return ''; }
-  }
-  async function saveNick(v){
-    if (!hasStorage()) return;
-    try{ await window.storage.set('myNick', v, false); }catch(e){}
-  }
   async function fetchPosts(symbol){
-    if (!hasStorage()) return (state[symbol].localPosts || []);
+    if (!db) return [];
     try{
-      const r = await window.storage.get('board:'+symbol, true);
-      return r && r.value ? JSON.parse(r.value) : [];
-    }catch(e){ return []; }
-  }
-  async function savePosts(symbol, posts){
-    const trimmed = posts.slice(-200);
-    if (!hasStorage()){ state[symbol].localPosts = trimmed; return; }
-    try{ await window.storage.set('board:'+symbol, JSON.stringify(trimmed), true); }catch(e){}
+      const snap = await db.collection('boards').doc(symbol).collection('posts').orderBy('ts','asc').limit(200).get();
+      return snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    }catch(e){ console.error('fetchPosts error', e); return []; }
   }
 
   function buildBoardTabs(){
@@ -1047,6 +1091,7 @@
       const sentLabel = p.sentiment==='buy' ? '매수' : p.sentiment==='sell' ? '매도' : '중립';
       const nick = (p.nick || '익명').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const text = (p.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const isAdmin = currentUser && ADMIN_KAKAO_IDS.includes(currentUser.id);
       return `
         <div class="board-post${p.reported ? ' reported' : ''}">
           <div class="board-post-head">
@@ -1056,6 +1101,7 @@
             <span class="head-spacer"></span>
             <span class="board-time">${boardTimeAgo(p.ts)}</span>
             <button class="report-btn" data-report-id="${p.id}">🚩 신고</button>
+            ${isAdmin ? `<button class="admin-del-btn" data-del-id="${p.id}">🗑 삭제</button>` : ''}
           </div>
           <div class="board-text">${text}</div>
         </div>`;
@@ -1066,8 +1112,6 @@
     const stats = computeSentimentStats(currentBoardPosts, activeBoardPeriodDays);
     renderSentimentPanel(document.getElementById('sentimentSummary'), stats, periodLabelFor(activeBoardPeriodDays));
   }
-
-  function genId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
   let toastTimer = null;
   function showToast(msg){
@@ -1080,12 +1124,29 @@
   }
 
   async function handleReport(id){
+    if (!db) return;
     const post = currentBoardPosts.find(p=>p.id===id);
     if (!post) return;
-    post.reported = true;
-    await savePosts(activeBoardSymbol, currentBoardPosts);
-    showToast('신고 접수 (미리보기) — 실제 연동 후 운영자 이메일로 전달되고, 운영자가 삭제할 수 있어요');
-    renderPostList();
+    try{
+      await db.collection('boards').doc(activeBoardSymbol).collection('posts').doc(id).update({ reported:true });
+      await db.collection('reports').add({
+        symbol: activeBoardSymbol, postId:id, nick: post.nick||'', text: post.text||'',
+        sentiment: post.sentiment||'neutral', postedAt: post.ts||null, reportedAt: Date.now(),
+        reportedBy: currentUser ? currentUser.nick : ''
+      });
+      showToast('신고가 접수됐어요 — 운영자가 확인 후 조치할게요');
+      await loadBoardData();
+    }catch(e){ console.error(e); showToast('신고 처리 중 오류가 발생했어요'); }
+  }
+
+  async function handleAdminDelete(id){
+    if (!db) return;
+    if (!confirm('이 글을 삭제할까요?')) return;
+    try{
+      await db.collection('boards').doc(activeBoardSymbol).collection('posts').doc(id).delete();
+      showToast('삭제했어요');
+      await loadBoardData();
+    }catch(e){ console.error(e); showToast('삭제에 실패했어요'); }
   }
 
   async function loadBoardData(){
@@ -1098,32 +1159,26 @@
   }
 
   async function submitPost(){
+    if (!currentUser || !db){ showToast('로그인 후 작성할 수 있어요'); return; }
     const textEl = document.getElementById('boardText');
     const text = textEl.value.trim();
     if (!text) return;
-    const nickEl = document.getElementById('boardNick');
-    const nick = nickEl.value.trim() || '익명';
     const sentiment = document.getElementById('boardSentiment').value;
-    saveNick(nick);
-    const posts = await fetchPosts(activeBoardSymbol);
-    posts.push({ id: genId(), nick, sentiment, text, ts: Date.now(), reported:false });
-    await savePosts(activeBoardSymbol, posts);
-    textEl.value = '';
-    await loadBoardData();
-    const inst = INSTRUMENTS.find(i=>i.symbol===activeBoardSymbol);
-    if (inst) refreshCardSentiment(inst);
+    try{
+      await db.collection('boards').doc(activeBoardSymbol).collection('posts').add({
+        nick: currentUser.nick, kakaoId: currentUser.id, sentiment, text, ts: Date.now(), reported:false
+      });
+      textEl.value = '';
+      await loadBoardData();
+      const inst = INSTRUMENTS.find(i=>i.symbol===activeBoardSymbol);
+      if (inst) refreshCardSentiment(inst);
+    }catch(e){ console.error(e); showToast('글 등록에 실패했어요'); }
   }
 
   async function initBoard(){
     buildBoardTabs();
-    const nick = await loadNick();
-    if (nick) document.getElementById('boardNick').value = nick;
-    document.getElementById('boardScope').textContent = hasStorage()
-      ? '이 화면을 여는 모든 사람과 공유돼요'
-      : '이 브라우저 세션에만 저장돼요 (아티팩트로 열면 다른 사람과 공유돼요)';
-    document.getElementById('boardNote').textContent = hasStorage()
-      ? ''
-      : '※ 파일을 직접 다운로드해서 열면 새로고침 시 글이 사라져요. Claude 아티팩트로 열어야 계속 저장/공유됩니다.';
+    document.getElementById('boardScope').textContent = '카카오로 로그인하면 이 화면을 여는 모든 사람과 공유돼요';
+    document.getElementById('boardNote').textContent = '';
     document.getElementById('boardSubmit').addEventListener('click', submitPost);
     document.getElementById('boardText').addEventListener('keydown', (e)=>{
       if (e.key==='Enter' && (e.metaKey||e.ctrlKey)) submitPost();
@@ -1135,24 +1190,16 @@
         renderSentimentSummary();
       });
     });
-    mockLoggedIn = await loadMockLogin();
+    currentUser = loadSession();
+    loggedIn = !!currentUser;
     updateBoardGateUI();
-    document.getElementById('loginKakaoBtn').addEventListener('click', ()=>{
-      mockLoggedIn = true; saveMockLogin(true); updateBoardGateUI();
-      showToast('카카오 로그인 미리보기 — 실제 인증은 Firebase 연동 후 연결돼요');
-    });
-    document.getElementById('loginAppleBtn').addEventListener('click', ()=>{
-      mockLoggedIn = true; saveMockLogin(true); updateBoardGateUI();
-      showToast('Apple 로그인 미리보기 — 실제 인증은 Firebase 연동 후 연결돼요');
-    });
-    document.getElementById('logoutMockBtn').addEventListener('click', ()=>{
-      mockLoggedIn = false; saveMockLogin(false); updateBoardGateUI();
-      showToast('로그아웃(미리보기) — 게시판이 다시 잠겼어요');
-    });
+    document.getElementById('loginKakaoBtn').addEventListener('click', kakaoLogin);
+    document.getElementById('logoutMockBtn').addEventListener('click', kakaoLogout);
     document.getElementById('boardList').addEventListener('click', (e)=>{
-      const btn = e.target.closest('.report-btn');
-      if (!btn) return;
-      handleReport(btn.dataset.reportId);
+      const reportBtn = e.target.closest('.report-btn');
+      if (reportBtn){ handleReport(reportBtn.dataset.reportId); return; }
+      const delBtn = e.target.closest('.admin-del-btn');
+      if (delBtn){ handleAdminDelete(delBtn.dataset.delId); return; }
     });
     await loadBoardData();
     await refreshAllCardSentiments();
