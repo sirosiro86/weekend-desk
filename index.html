@@ -127,6 +127,7 @@
   .price-sub{ font-family:var(--font-mono); font-size:11px; color:var(--text-dim); margin-top:2px; }
 
   .compare-block{ margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border-soft); }
+  .target-block{ border-color:rgba(226,144,63,0.25); }
   .compare-label{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:.04em; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; }
   .compare-row{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
   .compare-delta{ font-family:var(--font-mono); font-size:14px; font-weight:600; }
@@ -146,8 +147,9 @@
   .change24-badge.down{ color:var(--coral); background:var(--coral-dim); }
   .change24-badge.flat{ color:var(--text-dim); background:var(--border-soft); }
 
-  .sparkline-wrap{ height:44px; margin:10px 0 6px; }
+  .sparkline-wrap{ height:44px; margin:10px 0 2px; cursor:pointer; }
   .sparkline-wrap canvas{ width:100%; height:100%; display:block; }
+  .chart-hint{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); text-align:right; margin-bottom:6px; }
 
   /* ---------- SENTIMENT: compact card indicator ---------- */
   .sentiment-mini{ margin-top:10px; }
@@ -200,6 +202,30 @@
 
   .disclaimer{ margin-top:26px; padding:16px 18px; border:1px solid var(--border-soft); border-radius:12px; background:var(--panel); font-size:11.5px; color:var(--text-faint); line-height:1.7; }
   .disclaimer b{ color:var(--text-dim); }
+
+  /* ---------- LEGAL / TERMS ACCORDION ---------- */
+  .legal-section{ margin-top:16px; padding:18px 20px 14px; border:1px solid var(--border-soft); border-radius:12px; background:var(--panel); }
+  .legal-header{ font-family:var(--font-display); font-weight:600; font-size:14px; color:var(--text); margin-bottom:4px; }
+  .legal-sub{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-bottom:12px; }
+  .legal-item{ border-top:1px solid var(--border-soft); padding:11px 0; }
+  .legal-item:first-of-type{ border-top:none; }
+  .legal-item summary{
+    cursor:pointer; font-family:var(--font-mono); font-size:12px; color:var(--text-dim);
+    list-style:none; display:flex; align-items:center; justify-content:space-between; user-select:none;
+  }
+  .legal-item summary::-webkit-details-marker{ display:none; }
+  .legal-item summary::after{ content:'+'; color:var(--text-faint); font-size:15px; font-weight:400; }
+  .legal-item[open] summary::after{ content:'–'; }
+  .legal-item summary:hover{ color:var(--text); }
+  .legal-body{ margin-top:12px; font-size:11.5px; color:var(--text-faint); line-height:1.75; }
+  .legal-body p{ margin:0 0 8px; }
+  .legal-body ul{ margin:6px 0 10px 18px; padding:0; }
+  .legal-body li{ margin-bottom:5px; }
+  .legal-body b{ color:var(--text-dim); }
+  .legal-footer-note{
+    margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft);
+    font-family:var(--font-mono); font-size:10px; color:var(--text-faint); line-height:1.6;
+  }
 
   /* ---------- AD SLOTS (placeholders — paste your AdSense unit inside) ---------- */
   .ad-slot{
@@ -288,6 +314,16 @@
   .reason-modal-close:hover{ color:var(--text); border-color:var(--text-dim); }
   .reason-modal-adlabel{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); letter-spacing:.08em; margin:0 0 12px; }
   .reason-modal-title{ font-family:var(--font-display); font-weight:600; font-size:16px; margin:8px 46px 14px 0; }
+  .reason-news-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .reason-news-item{
+    display:block; padding:12px 14px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border-soft);
+    color:var(--text); text-decoration:none; font-family:var(--font-body); font-size:13px; line-height:1.5;
+    transition:border-color .2s;
+  }
+  .reason-news-item:hover{ border-color:var(--copper); }
+  .reason-news-item .src{ display:block; margin-top:4px; font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .reason-news-empty{ font-size:12px; color:var(--text-faint); text-align:center; padding:10px 0; }
+  .reason-links-label{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); letter-spacing:.06em; margin:0 0 8px; text-transform:uppercase; }
   .reason-modal-links{ display:flex; flex-direction:column; gap:8px; }
   .reason-link{
     display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-radius:10px;
@@ -296,6 +332,41 @@
   }
   .reason-link:hover{ border-color:var(--copper); }
   .reason-link .arrow{ color:var(--text-faint); font-family:var(--font-mono); }
+
+  /* ---------- FULL CHART MODAL ---------- */
+  .chart-modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(5,7,10,0.78); z-index:110;
+    align-items:center; justify-content:center; padding:16px;
+  }
+  .chart-modal-overlay.show{ display:flex; }
+  .chart-modal{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px; width:100%; max-width:680px;
+    max-height:92vh; overflow-y:auto; position:relative; padding:20px;
+  }
+  .chart-modal-close{
+    position:absolute; top:14px; right:14px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:100px; cursor:pointer;
+  }
+  .chart-modal-close:hover{ color:var(--text); border-color:var(--text-dim); }
+  .chart-modal-head{ margin:0 46px 4px 0; }
+  .chart-modal-title{ font-family:var(--font-display); font-weight:600; font-size:16px; }
+  .chart-modal-price{ display:flex; align-items:baseline; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  .chart-modal-price .p{ font-family:var(--font-mono); font-size:20px; font-weight:600; }
+  .chart-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin:14px 0 12px; }
+  .chart-tab{
+    font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:100px;
+    border:1px solid var(--border); background:var(--panel-2); color:var(--text-dim); cursor:pointer;
+  }
+  .chart-tab.active{ border-color:var(--copper); color:var(--copper); background:var(--copper-dim); }
+  .chart-tab.live.active{ border-color:var(--mint); color:var(--mint); background:var(--mint-dim); }
+  .chart-canvas-wrap{ position:relative; height:300px; background:var(--panel-2); border-radius:10px; border:1px solid var(--border-soft); }
+  .chart-canvas-wrap canvas{ width:100%; height:100%; display:block; }
+  .chart-loading{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint);
+  }
+  .chart-live-dot{ width:6px; height:6px; border-radius:50%; background:var(--mint); box-shadow:0 0 6px var(--mint); animation:blink 1.4s infinite; display:inline-block; margin-right:5px; }
+  .chart-modal-note{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); margin-top:10px; text-align:center; }
 
   /* ---------- TOAST ---------- */
   .toast{
@@ -444,7 +515,101 @@
   </div>
 
   <div class="disclaimer">
-    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USD/KRW 환율은 공개 환율 API를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판 글은 별도 로그인 없이 누구나 작성할 수 있고, 이 화면을 여는 모든 사람에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. "상승/하락 이유 보기" 버튼은 실제 24시간 가격 변동 방향에 따라 네이버·구글의 관련 뉴스 검색 결과로 연결하는 외부 링크이며, 이 페이지가 직접 이유를 분석·제공하지는 않습니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
+    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USD/KRW 환율은 공개 환율 API를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판 글은 별도 로그인 없이 누구나 작성할 수 있고, 이 화면을 여는 모든 사람에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. "상승/하락 이유 보기" 버튼은 실제 24시간 가격 변동 방향에 따라 구글 뉴스에서 관련 기사 목록을 가져와 보여주며(불러오지 못하면 검색 링크로 대체), 이 페이지가 직접 이유를 분석·작성하는 것은 아닙니다. <b>"증권사 목표가 컨센서스"</b>는 실시간 자동 수집이 아니라 직접 입력·수정하는 값이며(작성 시점 기준 수치를 넣어뒀어요), 목표가는 증권사 애널리스트의 예측치일 뿐 실제 주가를 보장하지 않습니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
+  </div>
+
+  <div class="legal-section">
+    <div class="legal-header">법적 고지</div>
+    <div class="legal-sub">이용약관 · 개인정보 처리방침 · 커뮤니티 운영정책 · 투자 정보 고지 · 저작권 안내</div>
+
+    <details class="legal-item">
+      <summary>이용약관</summary>
+      <div class="legal-body">
+        <p><b>제1조 (목적)</b> 이 약관은 Weekend Desk(이하 "사이트")가 제공하는 서비스의 이용 조건과 절차, 이용자와 운영자의 권리·의무를 규정합니다.</p>
+        <p><b>제2조 (서비스 내용)</b> 사이트는 바이낸스 무기한선물 시세를 환율로 환산한 참고용 추정 시세, 참고용 심리 지표, 종목 게시판, 증권사 목표가 참고 정보 등을 제공합니다. 사이트는 증권사·거래소가 아니며 매매를 중개하지 않습니다.</p>
+        <p><b>제3조 (이용자 의무)</b> 이용자는 다음 행위를 해서는 안 됩니다.</p>
+        <ul>
+          <li>허위 정보 유포, 시세 조작을 목적으로 한 게시</li>
+          <li>타인의 명예를 훼손하거나 욕설·비방하는 게시</li>
+          <li>타인의 개인정보를 무단으로 게시</li>
+          <li>광고·스팸성 게시물 반복 등록</li>
+          <li>사이트 운영을 방해하는 자동화된 접근(과도한 크롤링 등)</li>
+        </ul>
+        <p><b>제4조 (게시물 관리)</b> 이용자가 작성한 게시물의 저작권은 작성자에게 있습니다. 운영자는 신고되거나 제3조를 위반한 것으로 판단되는 게시물을 사전 통지 없이 삭제할 수 있습니다.</p>
+        <p><b>제5조 (면책)</b> 운영자는 서비스에 포함된 시세·지표·목표가 정보의 정확성, 최신성, 완전성을 보장하지 않으며, 이를 이용한 판단으로 발생한 손해에 대해 책임을 지지 않습니다. 시스템 점검, 외부 데이터 제공처(바이낸스, 공개 환율 API, 구글 뉴스 등)의 장애로 인한 서비스 중단에 대해서도 책임을 지지 않습니다.</p>
+        <p><b>제6조 (약관의 변경)</b> 이 약관은 서비스 개선에 따라 변경될 수 있으며, 변경 시 사이트 내 공지로 대체합니다.</p>
+      </div>
+    </details>
+
+    <details class="legal-item">
+      <summary>개인정보 처리방침</summary>
+      <div class="legal-body">
+        <p>Weekend Desk는 개인정보보호법 등 관련 법령을 준수하며, 다음과 같이 개인정보를 처리합니다.</p>
+        <p><b>1. 수집하는 항목</b></p>
+        <ul>
+          <li>게시판 이용 시: 이용자가 직접 입력하는 닉네임(실명이 아닌 자유 텍스트), 게시글 내용, 작성 시각</li>
+          <li>자동 수집: 접속 IP, 브라우저 정보, 쿠키 등 서비스 운영·보안 및 광고 게재 과정에서 자동으로 생성되는 정보</li>
+        </ul>
+        <p>사이트는 회원가입이나 로그인을 요구하지 않으며, 실명·이메일·전화번호 등을 수집하지 않습니다.</p>
+        <p><b>2. 이용 목적</b> 게시판 서비스 제공, 부정 이용(도배·시세 조작성 게시 등) 방지, 신고 처리, 광고 게재.</p>
+        <p><b>3. 보관 기간</b> 게시글은 작성자 또는 운영자가 삭제하기 전까지 보관됩니다. 신고 처리 기록은 분쟁 대응을 위해 별도 보관될 수 있습니다.</p>
+        <p><b>4. 제3자 제공 및 처리위탁</b> 사이트는 아래 해외 사업자의 서비스를 이용하며, 이 과정에서 정보가 해당 사업자의 서버(해외 소재 포함)에 저장·처리될 수 있습니다.</p>
+        <ul>
+          <li>Google Firebase(Firestore) — 게시판 데이터 저장</li>
+          <li>Google AdSense — 광고 게재 및 맞춤형 광고를 위한 쿠키 사용</li>
+          <li>Vercel — 웹사이트 호스팅</li>
+        </ul>
+        <p><b>5. 쿠키</b> 광고 개인화를 위해 쿠키가 사용될 수 있습니다. 이용자는 브라우저 설정에서 쿠키 저장을 거부할 수 있으며, 이 경우 일부 광고가 맞춤형으로 제공되지 않을 수 있습니다.</p>
+        <p><b>6. 이용자 권리</b> 본인이 작성한 게시물의 삭제를 원하는 경우 아래 문의처로 요청할 수 있습니다.</p>
+        <p><b>7. 만 14세 미만 이용자</b> 본 사이트는 만 14세 미만 아동으로부터 개인정보를 의도적으로 수집하지 않으며, 만 14세 미만은 게시판 이용을 자제해 주시기 바랍니다.</p>
+        <p><b>8. 문의처</b> 개인정보 관련 문의: [운영자 이메일 입력]</p>
+      </div>
+    </details>
+
+    <details class="legal-item">
+      <summary>커뮤니티 운영정책</summary>
+      <div class="legal-body">
+        <p>종목 게시판은 별도 로그인 없이 누구나 이용할 수 있는 자유 게시판입니다. 원활한 이용을 위해 아래 정책을 운영합니다.</p>
+        <p><b>금지 게시물</b></p>
+        <ul>
+          <li>욕설, 비방, 혐오 표현</li>
+          <li>허위 사실 유포 또는 시세·거래량 조작을 유도하는 게시물(이른바 "리딩방" 유형 포함)</li>
+          <li>특정 종목에 대한 매수·매도 강요성 게시물</li>
+          <li>타인의 개인정보 노출</li>
+          <li>도배, 광고, 스팸성 게시물</li>
+        </ul>
+        <p><b>신고 및 처리</b> 게시물마다 있는 "🚩 신고" 버튼으로 신고할 수 있습니다. 신고된 게시물은 별도 목록에 기록되며, 운영자가 확인 후 삭제 등의 조치를 할 수 있습니다. 명백한 불법 정보(명예훼손, 개인정보 노출 등)는 신고 접수 후 신속히 처리합니다.</p>
+        <p><b>게시물 저작권</b> 게시물의 저작권은 작성자에게 있으나, 운영자는 서비스 제공(신고 처리, 화면 표시 등) 목적 범위 내에서 게시물을 사용할 수 있습니다.</p>
+        <p>게시판의 의견은 작성자 개인의 의견이며, 운영자의 견해나 투자 추천이 아닙니다.</p>
+      </div>
+    </details>
+
+    <details class="legal-item">
+      <summary>투자 정보 고지 및 면책</summary>
+      <div class="legal-body">
+        <p><b>이 사이트는 금융투자업 인가를 받은 사업자가 아니며, 투자자문업·투자중개업을 영위하지 않습니다.</b> 제공되는 모든 정보는 투자 판단의 참고 자료일 뿐, 특정 종목의 매수·매도를 권유하거나 투자 자문을 제공하는 것이 아닙니다.</p>
+        <ul>
+          <li>화면에 표시되는 원화·달러 환산 시세는 바이낸스 거래소의 무기한선물(perpetual futures, 파생상품) 가격을 환율로 환산한 추정치이며, 국내 거래소(KRX)나 나스닥 등 공식 거래소의 실제 체결가가 아닙니다.</li>
+          <li>무기한선물은 최대 10~50배 레버리지가 적용되는 고위험 파생상품으로, 실제 원주보다 가격 변동성이 훨씬 클 수 있습니다.</li>
+          <li>"기준 종가"와 "증권사 목표가 컨센서스"는 운영자 또는 이용자가 수동으로 입력·수정하는 값으로, 실시간 자동 수집 데이터가 아닙니다. 목표가는 증권사 애널리스트의 예측치일 뿐이며 실제 주가를 보장하지 않습니다.</li>
+          <li>"참고용 지표"(상승/하락 우세 표시)는 가격 모멘텀·펀딩비·게시판 의견을 단순 합산한 값으로, 통계적으로 검증된 예측이나 매매 신호가 아닙니다.</li>
+          <li>게시판에 게시된 의견은 익명 이용자 개인의 견해이며 운영자의 의견이 아닙니다.</li>
+        </ul>
+        <p>모든 투자 판단과 그에 따른 손익은 전적으로 이용자 본인의 책임입니다. 실제 매매 결정은 반드시 증권사 HTS·MTS, 공식 거래소 등 신뢰할 수 있는 출처에서 정보를 재확인한 후 하시기 바랍니다.</p>
+      </div>
+    </details>
+
+    <details class="legal-item">
+      <summary>저작권 및 상표 고지</summary>
+      <div class="legal-body">
+        <p>SK하이닉스, 삼성전자, SanDisk, Micron, SpaceX, Binance 등 사이트에 언급된 기업·거래소명 및 상표는 각 권리자의 자산이며, 시세·종목 식별을 위한 목적으로만 사용됩니다. 본 사이트는 위 기업·거래소와 어떠한 제휴, 후원, 협력 관계가 없으며, 이들의 공식 웹사이트가 아닙니다.</p>
+        <p>"상승/하락 이유 보기" 기능을 통해 표시되는 뉴스 기사 제목과 링크는 각 언론사에 저작권이 있으며, 본 사이트는 제목과 원문 링크만 제공하고 기사 본문을 복제·게시하지 않습니다.</p>
+      </div>
+    </details>
+
+    <div class="legal-footer-note">
+      최종 업데이트: 2026-07-14 · 이 문서는 참고용 템플릿이며, 정식 법률 자문을 대체하지 않습니다. 실제 서비스 운영·광고 게재 전에는 변호사 등 전문가의 검토를 권장합니다. 문의: [운영자 이메일 입력]
+    </div>
   </div>
 
 </div>
@@ -463,8 +628,35 @@
     <div class="reason-modal-content" id="reasonModalContent" style="display:none;">
       <button class="reason-modal-close" id="reasonModalCloseContent">✕ 닫기</button>
       <div class="reason-modal-title" id="reasonModalTitle"></div>
+      <div class="reason-news-list" id="reasonNewsList"></div>
+      <div class="reason-links-label">더 찾아보기</div>
       <div class="reason-modal-links" id="reasonModalLinks"></div>
     </div>
+  </div>
+</div>
+
+<div class="chart-modal-overlay" id="chartModalOverlay">
+  <div class="chart-modal">
+    <button class="chart-modal-close" id="chartModalClose">✕ 닫기</button>
+    <div class="chart-modal-head">
+      <div class="chart-modal-title" id="chartModalTitle">-</div>
+      <div class="chart-modal-price">
+        <span class="p" id="chartModalPrice">-</span>
+        <span class="change24-badge flat" id="chartModalChange">--.--%</span>
+      </div>
+    </div>
+    <div class="chart-tabs" id="chartTabs">
+      <button class="chart-tab live" data-tf="live">🔴 실시간(틱)</button>
+      <button class="chart-tab" data-tf="1m">1분봉</button>
+      <button class="chart-tab active" data-tf="15m">15분봉</button>
+      <button class="chart-tab" data-tf="1h">1시간봉</button>
+      <button class="chart-tab" data-tf="1d">1일봉</button>
+    </div>
+    <div class="chart-canvas-wrap">
+      <canvas id="chartModalCanvas"></canvas>
+      <div class="chart-loading" id="chartModalLoading">불러오는 중…</div>
+    </div>
+    <div class="chart-modal-note" id="chartModalNote">15분봉 · 최근 24시간 · 바이낸스 무기한선물 기준</div>
   </div>
 </div>
 
@@ -489,12 +681,12 @@
 
   // baselineDefault is a *seed* value only — real defaults should be refreshed by the user each trading day.
   const INSTRUMENTS = [
-    { symbol:'SKHYNIXUSDT', nameKo:'SK하이닉스 (국내 KRX)', nameEn:'SK Hynix — Korea Exchange',  group:'gridKR',  market:'KRX',    baseCcy:'KRW', baseDefault:2180000, searchName:'SK하이닉스' },
-    { symbol:'SKHYUSDT',    nameKo:'SK하이닉스 (나스닥 ADR)', nameEn:'SK Hynix ADR — Nasdaq (SKHY)', group:'gridKR', market:'NASDAQ', baseCcy:'USD', baseDefault:168.01, searchName:'SK하이닉스 ADR' },
-    { symbol:'SAMSUNGUSDT', nameKo:'삼성전자',   nameEn:'Samsung Electronics', group:'gridKR', market:'KRX', baseCcy:'KRW', baseDefault:285000 },
-    { symbol:'SNDKUSDT',    nameKo:'샌디스크',   nameEn:'SanDisk',   group:'gridUS',  market:'NASDAQ', baseCcy:'USD', baseDefault:1915.92 },
-    { symbol:'MUUSDT',      nameKo:'마이크론',   nameEn:'Micron Technology', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:979.30 },
-    { symbol:'SPCXUSDT',    nameKo:'스페이스X',  nameEn:'SpaceX (Pre-IPO)', group:'gridPre', market:'PREIPO', baseCcy:null, baseDefault:null },
+    { symbol:'SKHYNIXUSDT', nameKo:'SK하이닉스 (국내 KRX)', nameEn:'SK Hynix — Korea Exchange',  group:'gridKR',  market:'KRX',    baseCcy:'KRW', baseDefault:2180000, searchName:'SK하이닉스', targetDefault:3547917 },
+    { symbol:'SKHYUSDT',    nameKo:'SK하이닉스 (나스닥 ADR)', nameEn:'SK Hynix ADR — Nasdaq (SKHY)', group:'gridKR', market:'NASDAQ', baseCcy:'USD', baseDefault:168.01, searchName:'SK하이닉스 ADR', targetDefault:null },
+    { symbol:'SAMSUNGUSDT', nameKo:'삼성전자',   nameEn:'Samsung Electronics', group:'gridKR', market:'KRX', baseCcy:'KRW', baseDefault:285000, targetDefault:513958 },
+    { symbol:'SNDKUSDT',    nameKo:'샌디스크',   nameEn:'SanDisk',   group:'gridUS',  market:'NASDAQ', baseCcy:'USD', baseDefault:1915.92, targetDefault:2035 },
+    { symbol:'MUUSDT',      nameKo:'마이크론',   nameEn:'Micron Technology', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:979.30, targetDefault:1486 },
+    { symbol:'SPCXUSDT',    nameKo:'스페이스X',  nameEn:'SpaceX (Pre-IPO)', group:'gridPre', market:'PREIPO', baseCcy:null, baseDefault:null, targetDefault:null },
   ];
 
   const state = {}; // symbol -> { closes, ok, updatedAt, lastPrice, high, low, changePct, baseline }
@@ -513,6 +705,17 @@
   function saveBaseline(symbol, value){
     if (!hasLocalStorage()) return;
     try{ localStorage.setItem('wd_baseline_'+symbol, String(value)); }catch(e){}
+  }
+  function loadTarget(symbol, fallback){
+    if (!hasLocalStorage()) return fallback;
+    try{
+      const v = localStorage.getItem('wd_target_'+symbol);
+      return (v!=null && v!=='') ? parseFloat(v) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function saveTarget(symbol, value){
+    if (!hasLocalStorage()) return;
+    try{ localStorage.setItem('wd_target_'+symbol, String(value)); }catch(e){}
   }
   function loadStoredFx(){
     if (!hasLocalStorage()) return null;
@@ -544,7 +747,7 @@
           ${cardBodyTemplate(inst)}
         </div>`;
       document.getElementById(inst.group).appendChild(el);
-      state[inst.symbol] = { closes:[], ok:null, updatedAt:null, lastPrice:null, high:null, low:null, changePct:null, baseline:inst.baseDefault, fundingRate:null, boardStats:null };
+      state[inst.symbol] = { closes:[], ok:null, updatedAt:null, lastPrice:null, high:null, low:null, changePct:null, baseline:inst.baseDefault, target:inst.targetDefault, fundingRate:null, boardStats:null };
     });
   }
 
@@ -568,9 +771,25 @@
         </div>` : `<div class="baseline-row">비상장 — 비교 기준가 없음</div>`}
       </div>
 
+      ${inst.market!=='PREIPO' ? `
+      <div class="compare-block target-block" id="targetBlock-${inst.symbol}">
+        <div class="compare-label">
+          <span>🎯 증권사 목표가 컨센서스</span>
+        </div>
+        <div id="targetContent-${inst.symbol}"><span class="compare-empty">목표가 미입력</span></div>
+        <div class="baseline-row">
+          목표가(${inst.baseCcy})
+          <input type="number" id="target-${inst.symbol}" value="${inst.targetDefault ?? ''}" step="any">
+          <button class="refresh-btn" data-save-target="${inst.symbol}" style="padding:2px 7px;">저장</button>
+        </div>
+      </div>` : ''}
+
       <div class="sentiment-mini" id="sentimentMini-${inst.symbol}"></div>
 
-      <div class="sparkline-wrap"><canvas id="spark-${inst.symbol}"></canvas></div>
+      <div class="sparkline-wrap" data-chart-symbol="${inst.symbol}" title="클릭해서 상세 차트 보기">
+        <canvas id="spark-${inst.symbol}"></canvas>
+      </div>
+      <div class="chart-hint">차트 확대 보기 →</div>
       <div class="card-foot">
         <span>24h High <b class="hi" id="hi-${inst.symbol}">-</b></span>
         <span>24h Low <b class="lo" id="lo-${inst.symbol}">-</b></span>
@@ -686,6 +905,7 @@
     if (!document.getElementById('price-'+inst.symbol)){
       document.getElementById('body-'+inst.symbol).innerHTML = cardBodyTemplate(inst);
       wireBaselineInput(inst.symbol);
+      wireTargetInput(inst.symbol);
     }
   }
 
@@ -704,6 +924,7 @@
     const priceEl = document.getElementById('price-'+symbol);
     const subEl = document.getElementById('priceSub-'+symbol);
     const compareEl = document.getElementById('compareContent-'+symbol);
+    const targetEl = document.getElementById('targetContent-'+symbol);
 
     if (inst.market==='KRX'){
       if (fxRate && s.lastPrice!=null){
@@ -711,6 +932,7 @@
         priceEl.textContent = fmtKRW(krw);
         subEl.textContent = '≈ ' + fmtUSD(s.lastPrice) + ' USDT (바이낸스 원가)';
         renderCompare(compareEl, krw, s.baseline, fmtKRW);
+        renderTarget(targetEl, krw, s.target, fmtKRW);
       } else {
         priceEl.textContent = fmtUSD(s.lastPrice) + ' USDT';
         subEl.textContent = '환율 대기 중 — 상단에서 환율을 확인하세요';
@@ -720,6 +942,7 @@
       priceEl.textContent = fmtUSD(s.lastPrice);
       subEl.textContent = fxRate ? ('≈ ' + fmtKRW(s.lastPrice*fxRate)) : '바이낸스 무기한선물 원가';
       renderCompare(compareEl, s.lastPrice, s.baseline, fmtUSD);
+      renderTarget(targetEl, s.lastPrice, s.target, fmtUSD);
     } else {
       priceEl.textContent = fmtUSD(s.lastPrice);
       subEl.textContent = fxRate ? ('≈ ' + fmtKRW(s.lastPrice*fxRate)) : '바이낸스 무기한선물 원가';
@@ -747,6 +970,7 @@
     if (ageEl) ageEl.textContent = timeAgo(s.updatedAt);
 
     renderMiniSentiment(document.getElementById('sentimentMini-'+symbol), symbol);
+    if (typeof chartSymbol !== 'undefined' && chartSymbol === symbol) updateChartModalHeader();
   }
 
   function renderCompare(container, current, baseline, fmt){
@@ -762,6 +986,23 @@
       <div class="compare-row">
         <span class="compare-delta ${cls}">${up?'▲':down?'▼':'－'} ${fmt(Math.abs(delta))}</span>
         <span class="compare-pct ${cls}">${up?'+':''}${pct.toFixed(2)}%</span>
+      </div>`;
+  }
+
+  function renderTarget(container, current, target, fmt){
+    if (!container) return;
+    if (target==null || isNaN(target) || target<=0 || current==null){
+      container.innerHTML = '<span class="compare-empty">목표가를 입력하면 상승여력이 표시돼요</span>';
+      return;
+    }
+    const delta = target - current;
+    const pct = (delta/current)*100;
+    const up = delta>0, down = delta<0;
+    const cls = up?'up':down?'down':'flat';
+    container.innerHTML = `
+      <div class="compare-row">
+        <span class="compare-delta ${cls}">${fmt(target)}</span>
+        <span class="compare-pct ${cls}">${up?'+':''}${pct.toFixed(2)}% 여력</span>
       </div>`;
   }
 
@@ -785,6 +1026,20 @@
       if (!isNaN(v) && v>0){
         state[symbol].baseline = v;
         saveBaseline(symbol, v);
+        const inst = INSTRUMENTS.find(i=>i.symbol===symbol);
+        refreshOne(inst, false);
+      }
+    });
+  }
+  function wireTargetInput(symbol){
+    const btn = document.querySelector(`[data-save-target="${symbol}"]`);
+    if (!btn) return;
+    btn.addEventListener('click', ()=>{
+      const input = document.getElementById('target-'+symbol);
+      const v = parseFloat(input.value);
+      if (!isNaN(v) && v>0){
+        state[symbol].target = v;
+        saveTarget(symbol, v);
         const inst = INSTRUMENTS.find(i=>i.symbol===symbol);
         refreshOne(inst, false);
       }
@@ -1116,19 +1371,57 @@
     return links;
   }
 
+  // Google 뉴스 RSS는 브라우저에서 직접 CORS가 막혀있어, rss2json(CORS 프록시 겸 XML→JSON 변환)을 거쳐서 받아옵니다.
+  async function fetchNewsList(query){
+    try{
+      const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
+      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error('rss2json http '+res.status);
+      const data = await res.json();
+      if (data.status !== 'ok' || !Array.isArray(data.items)) throw new Error('bad rss2json response');
+      return data.items.slice(0,6).map(it=>{
+        // Google 뉴스 제목은 보통 "제목 - 언론사" 형태라 언론사만 따로 분리
+        const m = /^(.*)\s-\s([^-]+)$/.exec(it.title||'');
+        return { title: m ? m[1] : (it.title||''), source: m ? m[2] : '', link: it.link };
+      });
+    }catch(e){ console.error('fetchNewsList error', e); return null; } // null = 실패 (링크 목록만 보여줌)
+  }
+
+  function renderNewsItems(items){
+    const el = document.getElementById('reasonNewsList');
+    if (!el) return;
+    if (items === null){
+      el.innerHTML = '<div class="reason-news-empty">기사 목록을 불러오지 못했어요 — 아래 링크로 직접 확인해주세요</div>';
+      return;
+    }
+    if (items.length === 0){
+      el.innerHTML = '<div class="reason-news-empty">관련 기사를 찾지 못했어요 — 아래 링크로 직접 확인해주세요</div>';
+      return;
+    }
+    el.innerHTML = items.map(it=>{
+      const title = (it.title||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const src = (it.source||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return `<a class="reason-news-item" href="${it.link}" target="_blank" rel="noopener">${title}${src?`<span class="src">${src}</span>`:''}</a>`;
+    }).join('');
+  }
+
   function openReasonModal(symbol){
     const inst = INSTRUMENTS.find(i=>i.symbol===symbol);
     const s = state[symbol];
     if (!inst || !s) return;
     const up = s.changePct > 0;
     const directionLabel = up ? '상승' : '하락';
+    const query = `${inst.searchName || inst.nameKo} 주가 ${directionLabel}`;
     document.getElementById('reasonModalOverlay').classList.add('show');
     document.getElementById('reasonModalAdView').style.display = '';
     document.getElementById('reasonModalContent').style.display = 'none';
     document.getElementById('reasonModalTitle').textContent = `${inst.nameKo} ${directionLabel} 이유 찾아보기`;
+    document.getElementById('reasonNewsList').innerHTML = '<div class="reason-news-empty">관련 기사 불러오는 중…</div>';
     document.getElementById('reasonModalLinks').innerHTML = buildReasonLinks(inst, directionLabel).map(l=>
       `<a class="reason-link" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="arrow">↗</span></a>`
     ).join('');
+    fetchNewsList(query).then(renderNewsItems);
   }
   function closeReasonModal(){
     document.getElementById('reasonModalOverlay').classList.remove('show');
@@ -1145,6 +1438,207 @@
     document.getElementById('reasonModalCloseContent').addEventListener('click', closeReasonModal);
     document.getElementById('reasonModalOverlay').addEventListener('click', (e)=>{
       if (e.target.id==='reasonModalOverlay') closeReasonModal();
+    });
+  }
+
+  /* ---------- Full chart modal: candlesticks (REST) + live tick line (WebSocket) ---------- */
+  const CHART_TF = {
+    live: { note:'실시간 체결 틱 · 바이낸스 웹소켓 · 새 체결마다 갱신 (바이낸스는 고정 1초봉을 제공하지 않아 실시간 체결가를 이어그려요)' },
+    '1m':  { interval:'1m',  limit:120, note:'1분봉 · 최근 2시간 · 바이낸스 무기한선물 기준' },
+    '15m': { interval:'15m', limit:96,  note:'15분봉 · 최근 24시간 · 바이낸스 무기한선물 기준' },
+    '1h':  { interval:'1h',  limit:168, note:'1시간봉 · 최근 7일 · 바이낸스 무기한선물 기준' },
+    '1d':  { interval:'1d',  limit:90,  note:'1일봉 · 최근 90일 · 바이낸스 무기한선물 기준' },
+  };
+  let chartSymbol = null;
+  let chartTF = '15m';
+  let chartWS = null;
+  let chartLiveBuffer = [];
+  let chartLiveRedrawTimer = null;
+
+  async function fetchCandles(symbol, interval, limit){
+    const res = await fetch(`${API_BASE}/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+    if (!res.ok) throw new Error('HTTP '+res.status);
+    const rows = await res.json();
+    return rows.map(r=>({ t:r[0], o:parseFloat(r[1]), h:parseFloat(r[2]), l:parseFloat(r[3]), c:parseFloat(r[4]) }));
+  }
+
+  function drawCandles(canvas, candles){
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+    if (!candles || candles.length<2) return;
+
+    const padL=8, padR=58, padT=14, padB=14;
+    const plotW=w-padL-padR, plotH=h-padT-padB;
+    let min=Infinity, max=-Infinity;
+    candles.forEach(c=>{ if(c.l<min) min=c.l; if(c.h>max) max=c.h; });
+    const range=(max-min)||1;
+    const n=candles.length, slot=plotW/n, bodyW=Math.max(1, slot*0.6);
+    const y = p => padT + (1-(p-min)/range)*plotH;
+
+    candles.forEach((c,i)=>{
+      const x = padL + i*slot + slot/2;
+      const up = c.c >= c.o;
+      const color = up ? '#5FE3B3' : '#F2666E';
+      ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, y(c.h)); ctx.lineTo(x, y(c.l)); ctx.stroke();
+      const yOpen=y(c.o), yClose=y(c.c);
+      const top=Math.min(yOpen,yClose), bh=Math.max(1, Math.abs(yClose-yOpen));
+      ctx.fillRect(x-bodyW/2, top, bodyW, bh);
+    });
+
+    ctx.font = '10px JetBrains Mono, monospace'; ctx.textAlign = 'left';
+    ctx.fillStyle = '#8C96A6';
+    ctx.fillText(fmtRaw(max), plotW+padL+4, y(max)+4);
+    ctx.fillText(fmtRaw(min), plotW+padL+4, y(min)+4);
+    const lastC = candles[candles.length-1];
+    ctx.fillStyle = lastC.c >= lastC.o ? '#5FE3B3' : '#F2666E';
+    ctx.fillText(fmtRaw(lastC.c), plotW+padL+4, y(lastC.c)+4);
+  }
+
+  function drawLiveLine(canvas, points){
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w*dpr; canvas.height = h*dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr,dpr); ctx.clearRect(0,0,w,h);
+    if (!points || points.length<2) return;
+
+    const padL=8, padR=58, padT=14, padB=14;
+    const plotW=w-padL-padR, plotH=h-padT-padB;
+    const prices = points.map(p=>p.price);
+    const min=Math.min(...prices), max=Math.max(...prices), range=(max-min)||1;
+    const stepX = plotW/(points.length-1);
+    const up = points[points.length-1].price >= points[0].price;
+    const color = up ? '#5FE3B3' : '#F2666E';
+    const y = p => padT + (1-(p-min)/range)*plotH;
+
+    ctx.beginPath();
+    points.forEach((p,i)=>{ const x=padL+i*stepX; i===0 ? ctx.moveTo(x,y(p.price)) : ctx.lineTo(x,y(p.price)); });
+    ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.lineJoin='round'; ctx.stroke();
+
+    const lastX = padL+(points.length-1)*stepX;
+    ctx.lineTo(lastX, padT+plotH); ctx.lineTo(padL, padT+plotH); ctx.closePath();
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0, color+'33'); grad.addColorStop(1, color+'00');
+    ctx.fillStyle = grad; ctx.fill();
+
+    const lastY = y(points[points.length-1].price);
+    ctx.beginPath(); ctx.arc(lastX, lastY, 3, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
+    ctx.font = '10px JetBrains Mono, monospace'; ctx.textAlign='left'; ctx.fillStyle = '#8C96A6';
+    ctx.fillText(fmtRaw(points[points.length-1].price), plotW+padL+4, lastY+4);
+  }
+
+  function connectRealtimeStream(symbol){
+    disconnectRealtimeStream();
+    chartLiveBuffer = [];
+    try{
+      chartWS = new WebSocket(`wss://fstream.binance.com/ws/${symbol.toLowerCase()}@aggTrade`);
+      chartWS.onmessage = (ev)=>{
+        try{
+          const msg = JSON.parse(ev.data);
+          const price = parseFloat(msg.p);
+          if (!isNaN(price)){
+            chartLiveBuffer.push({ price, time: msg.T || Date.now() });
+            if (chartLiveBuffer.length > 300) chartLiveBuffer.shift();
+            scheduleChartLiveRedraw();
+          }
+        }catch(e){}
+      };
+      chartWS.onerror = ()=>{
+        const note = document.getElementById('chartModalNote');
+        if (note) note.textContent = '실시간 연결에 문제가 생겼어요 — 탭을 다시 눌러 재시도해주세요';
+      };
+    }catch(e){ console.error('realtime WS connect failed', e); }
+  }
+  function disconnectRealtimeStream(){
+    if (chartWS){
+      try{ chartWS.onmessage=null; chartWS.onerror=null; chartWS.close(); }catch(e){}
+      chartWS = null;
+    }
+    clearTimeout(chartLiveRedrawTimer);
+    chartLiveRedrawTimer = null;
+  }
+  function scheduleChartLiveRedraw(){
+    if (chartLiveRedrawTimer) return;
+    chartLiveRedrawTimer = setTimeout(()=>{
+      chartLiveRedrawTimer = null;
+      const canvas = document.getElementById('chartModalCanvas');
+      const loadingEl = document.getElementById('chartModalLoading');
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (canvas) drawLiveLine(canvas, chartLiveBuffer);
+    }, 150);
+  }
+
+  function updateChartModalHeader(){
+    if (!chartSymbol) return;
+    const s = state[chartSymbol];
+    const priceEl = document.getElementById('chartModalPrice');
+    const chEl = document.getElementById('chartModalChange');
+    if (!s || !priceEl || !chEl) return;
+    if (s.lastPrice!=null) priceEl.textContent = fmtRaw(s.lastPrice) + ' USDT';
+    if (s.changePct!=null){
+      const up = s.changePct>0, down = s.changePct<0;
+      chEl.textContent = '24h ' + (up?'+':'') + s.changePct.toFixed(2) + '%';
+      chEl.className = 'change24-badge ' + (up?'up':down?'down':'flat');
+    }
+  }
+
+  async function loadChartTF(tf){
+    if (!chartSymbol) return;
+    chartTF = tf;
+    document.querySelectorAll('.chart-tab').forEach(b=>b.classList.toggle('active', b.dataset.tf===tf));
+    document.getElementById('chartModalNote').textContent = CHART_TF[tf].note;
+    const loadingEl = document.getElementById('chartModalLoading');
+    const canvas = document.getElementById('chartModalCanvas');
+
+    if (tf === 'live'){
+      loadingEl.textContent = '실시간 데이터 연결 중…';
+      loadingEl.style.display = chartLiveBuffer.length ? 'none' : '';
+      connectRealtimeStream(chartSymbol);
+      return;
+    }
+    disconnectRealtimeStream();
+    loadingEl.textContent = '불러오는 중…';
+    loadingEl.style.display = '';
+    try{
+      const cfg = CHART_TF[tf];
+      const candles = await fetchCandles(chartSymbol, cfg.interval, cfg.limit);
+      loadingEl.style.display = 'none';
+      drawCandles(canvas, candles);
+    }catch(e){
+      loadingEl.textContent = '차트를 불러오지 못했어요';
+      loadingEl.style.display = '';
+    }
+  }
+
+  function openChartModal(symbol){
+    const inst = INSTRUMENTS.find(i=>i.symbol===symbol);
+    if (!inst) return;
+    chartSymbol = symbol;
+    document.getElementById('chartModalOverlay').classList.add('show');
+    document.getElementById('chartModalTitle').textContent = inst.nameKo;
+    updateChartModalHeader();
+    loadChartTF('15m');
+  }
+  function closeChartModal(){
+    disconnectRealtimeStream();
+    document.getElementById('chartModalOverlay').classList.remove('show');
+    chartSymbol = null;
+  }
+  function wireChartModal(){
+    document.body.addEventListener('click', (e)=>{
+      const wrap = e.target.closest('.sparkline-wrap[data-chart-symbol]');
+      if (wrap){ openChartModal(wrap.dataset.chartSymbol); }
+    });
+    document.querySelectorAll('.chart-tab').forEach(btn=>{
+      btn.addEventListener('click', ()=> loadChartTF(btn.dataset.tf));
+    });
+    document.getElementById('chartModalClose').addEventListener('click', closeChartModal);
+    document.getElementById('chartModalOverlay').addEventListener('click', (e)=>{
+      if (e.target.id==='chartModalOverlay') closeChartModal();
     });
   }
 
@@ -1240,6 +1734,7 @@
     }
   });
   wireReasonModal();
+  wireChartModal();
 
   /* ---------- Init ---------- */
   async function init(){
@@ -1250,6 +1745,11 @@
         const input = document.getElementById('baseline-'+inst.symbol);
         if (input) input.value = state[inst.symbol].baseline ?? '';
         wireBaselineInput(inst.symbol);
+
+        state[inst.symbol].target = loadTarget(inst.symbol, inst.targetDefault);
+        const targetInput = document.getElementById('target-'+inst.symbol);
+        if (targetInput) targetInput.value = state[inst.symbol].target ?? '';
+        wireTargetInput(inst.symbol);
       }
     }
     renderPulse();
