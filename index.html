@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>에브리데이 스톡 — 바이낸스 환산 시세 비교</title>
+<title>Everyday Stock — 바이낸스 환산 시세 비교</title>
 <script>
   // 저장된 테마를 CSS가 그려지기 전에 먼저 적용해서 화면 깜빡임(다크→라이트 전환)을 막아요.
   (function(){
@@ -493,7 +493,7 @@
   <header class="top">
     <div>
       <div class="brand-eyebrow">binance perp · krw / usd 환산 비교</div>
-      <h1>에브리데이 스톡</h1>
+      <h1>Everyday Stock</h1>
       <p class="subtitle">바이낸스 무기한선물 시세를 실시간 환율로 환산해 직전 종가와 바로 비교합니다. KRX·나스닥이 쉬는 시간에도 흐름을 확인하세요.</p>
     </div>
     <div class="header-right">
@@ -642,7 +642,7 @@
     <details class="legal-item">
       <summary>이용약관</summary>
       <div class="legal-body">
-        <p><b>제1조 (목적)</b> 이 약관은 에브리데이 스톡(이하 "사이트")이 제공하는 서비스의 이용 조건과 절차, 이용자와 운영자의 권리·의무를 규정합니다.</p>
+        <p><b>제1조 (목적)</b> 이 약관은 Everyday Stock(이하 "사이트")이 제공하는 서비스의 이용 조건과 절차, 이용자와 운영자의 권리·의무를 규정합니다.</p>
         <p><b>제2조 (서비스 내용)</b> 사이트는 바이낸스 무기한선물 시세를 환율로 환산한 참고용 추정 시세, 참고용 심리 지표, 종목 게시판, 증권사 목표가 참고 정보 등을 제공합니다. 사이트는 증권사·거래소가 아니며 매매를 중개하지 않습니다.</p>
         <p><b>제3조 (이용자 의무)</b> 이용자는 다음 행위를 해서는 안 됩니다.</p>
         <ul>
@@ -661,7 +661,7 @@
     <details class="legal-item">
       <summary>개인정보 처리방침</summary>
       <div class="legal-body">
-        <p>에브리데이 스톡은 개인정보보호법 등 관련 법령을 준수하며, 다음과 같이 개인정보를 처리합니다.</p>
+        <p>Everyday Stock은 개인정보보호법 등 관련 법령을 준수하며, 다음과 같이 개인정보를 처리합니다.</p>
         <p><b>1. 수집하는 항목</b></p>
         <ul>
           <li>게시판 이용 시: 게시글 내용, 작성 시각, 시스템이 자동 발급하는 코드네임(실명이 아닌 임의 문자열)</li>
@@ -747,8 +747,9 @@
     <div class="reason-modal-content" id="reasonModalContent" style="display:none;">
       <button class="reason-modal-close" id="reasonModalCloseContent">✕ 닫기</button>
       <div class="reason-modal-title" id="reasonModalTitle"></div>
+      <div class="reason-links-label">시장 전반 뉴스</div>
       <div class="reason-news-list" id="reasonNewsList"></div>
-      <div class="reason-links-label">더 찾아보기</div>
+      <div class="reason-links-label">이 종목 뉴스 더 찾아보기</div>
       <div class="reason-modal-links" id="reasonModalLinks"></div>
     </div>
   </div>
@@ -1624,60 +1625,27 @@
     return links;
   }
 
-  // Google 뉴스 RSS는 브라우저에서 직접 CORS가 막혀있어, rss2json(CORS 프록시 겸 XML→JSON 변환)을 거쳐서 받아옵니다.
-  // 하나의 RSS 주소를 rss2json → allorigins 순으로 시도해서 기사 배열을 가져옴 (둘 다 실패하면 빈 배열)
-  async function fetchRssItems(rssUrl){
+  // 종목별로 개별 검색하던 방식(Google 뉴스 + 프록시 체인)이 자주 느리게 실패해서,
+  // 이미 공포탐욕지수로 안정적으로 쓰고 있는 FearGreedChart.com의 일반 시장 뉴스로 바꿨습니다.
+  // Yahoo Finance·MarketWatch·Reuters에서 모은 최신 시장 뉴스 7개를 15분 캐시로 보여줘요.
+  let marketNewsCache = null;
+  let marketNewsCacheTime = 0;
+  async function fetchMarketNews(){
+    if (marketNewsCache && (Date.now() - marketNewsCacheTime < 15*60*1000)) return marketNewsCache;
     try{
-      const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
-      const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error('rss2json http '+res.status);
+      const controller = new AbortController();
+      const timeout = setTimeout(()=>controller.abort(), 6000); // 6초 넘게 걸리면 포기하고 링크로 대체
+      const res = await fetch('https://feargreedchart.com/api/?action=news', { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error('HTTP '+res.status);
       const data = await res.json();
-      if (data.status !== 'ok' || !Array.isArray(data.items)) throw new Error('bad rss2json response');
-      const items = data.items.map(it=>{
-        // Google 뉴스 제목은 보통 "제목 - 언론사" 형태라 언론사만 따로 분리
-        const m = /^(.*)\s-\s([^-]+)$/.exec(it.title||'');
-        return { title: m ? m[1] : (it.title||''), source: m ? m[2] : '', link: it.link };
-      });
-      if (items.length) return items;
-      throw new Error('rss2json returned no items');
-    }catch(e){ console.error('fetchRssItems rss2json failed', e); }
-
-    try{
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
-      const res = await fetch(proxyUrl);
-      if (!res.ok) throw new Error('allorigins http '+res.status);
-      const xmlText = await res.text();
-      const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
-      const items = Array.from(doc.querySelectorAll('item')).map(item=>{
-        const rawTitle = item.querySelector('title') ? item.querySelector('title').textContent : '';
-        const link = item.querySelector('link') ? item.querySelector('link').textContent : '';
-        const m = /^(.*)\s-\s([^-]+)$/.exec(rawTitle);
-        return { title: m ? m[1] : rawTitle, source: m ? m[2] : '', link };
-      });
-      if (items.length) return items;
-      throw new Error('allorigins returned no items');
-    }catch(e){ console.error('fetchRssItems allorigins fallback failed', e); }
-
-    return [];
-  }
-
-  // "SK Hynix — Korea Exchange" 같은 nameEn에서 부제 잘라내기 → "SK Hynix"
-  function cleanEnglishName(inst){
-    return (inst.nameEn || inst.nameKo || '').split(' — ')[0].split(' (')[0].trim();
-  }
-
-  // 국내(한국어) 뉴스 + 해외(영어 — 블룸버그·로이터·CNBC 등) 뉴스를 같이 검색해서 섞어요
-  async function fetchNewsList(inst, directionLabel){
-    const koQuery = `${inst.searchName || inst.nameKo} 주가 ${directionLabel}`;
-    const enDirection = directionLabel==='상승' ? 'stock rises' : 'stock falls';
-    const enQuery = `${cleanEnglishName(inst)} ${enDirection}`;
-
-    const koUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(koQuery)}&hl=ko&gl=KR&ceid=KR:ko`;
-    const enUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(enQuery)}&hl=en-US&gl=US&ceid=US:en`;
-
-    const [koItems, enItems] = await Promise.all([fetchRssItems(koUrl), fetchRssItems(enUrl)]);
-    const merged = koItems.slice(0,4).concat(enItems.slice(0,4)).slice(0,7);
-    return merged.length ? merged : null; // null = 실패 — 호출부에서 검색 링크로 대체
+      if (!Array.isArray(data)) throw new Error('bad response shape');
+      const items = data.slice(0,7).map(it=>({ title: it.title||'', source: it.publisher||'', link: it.link||'' }));
+      if (!items.length) throw new Error('no items');
+      marketNewsCache = items;
+      marketNewsCacheTime = Date.now();
+      return items;
+    }catch(e){ console.error('fetchMarketNews failed', e); return null; }
   }
 
   function renderNewsItems(items){
@@ -1708,11 +1676,11 @@
     document.getElementById('reasonModalAdView').style.display = '';
     document.getElementById('reasonModalContent').style.display = 'none';
     document.getElementById('reasonModalTitle').textContent = `${inst.nameKo} ${directionLabel} 이유 찾아보기`;
-    document.getElementById('reasonNewsList').innerHTML = '<div class="reason-news-empty">관련 기사 불러오는 중…</div>';
+    document.getElementById('reasonNewsList').innerHTML = '<div class="reason-news-empty">시장 뉴스 불러오는 중…</div>';
     document.getElementById('reasonModalLinks').innerHTML = buildReasonLinks(inst, directionLabel).map(l=>
       `<a class="reason-link" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="arrow">↗</span></a>`
     ).join('');
-    fetchNewsList(inst, directionLabel).then(renderNewsItems);
+    fetchMarketNews().then(renderNewsItems);
   }
   function closeReasonModal(){
     document.getElementById('reasonModalOverlay').classList.remove('show');
