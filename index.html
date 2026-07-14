@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weekend Desk — 바이낸스 환산 시세 비교</title>
+<title>에브리데이 스톡 — 바이낸스 환산 시세 비교</title>
+<script>
+  // 저장된 테마를 CSS가 그려지기 전에 먼저 적용해서 화면 깜빡임(다크→라이트 전환)을 막아요.
+  (function(){
+    try{ if (localStorage.getItem('wd_theme')==='light') document.documentElement.classList.add('light-mode'); }catch(e){}
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -23,11 +29,35 @@
     --copper-dim:rgba(226,144,63,0.14);
     --mint:#5FE3B3;
     --mint-dim:rgba(95,227,179,0.14);
+    --mint-strong:rgba(95,227,179,0.32);
     --coral:#F2666E;
     --coral-dim:rgba(242,102,110,0.14);
+    --session-pre:rgba(226,144,63,0.09);
+    --session-main:rgba(226,144,63,0.38);
+    --session-after:rgba(226,144,63,0.20);
     --font-display:'Space Grotesk',sans-serif;
     --font-mono:'JetBrains Mono',monospace;
     --font-body:'Inter',sans-serif;
+  }
+  html.light-mode{
+    --bg:#F5F6F8;
+    --panel:#FFFFFF;
+    --panel-2:#F1F3F6;
+    --border:#E1E5EB;
+    --border-soft:#EAEDF1;
+    --text:#14181F;
+    --text-dim:#5B6472;
+    --text-faint:#8B93A0;
+    --copper:#C97A2E;
+    --copper-dim:rgba(201,122,46,0.12);
+    --mint:#1B9E72;
+    --mint-dim:rgba(27,158,114,0.12);
+    --mint-strong:rgba(27,158,114,0.26);
+    --coral:#D6434E;
+    --coral-dim:rgba(214,67,78,0.10);
+    --session-pre:rgba(201,122,46,0.08);
+    --session-main:rgba(201,122,46,0.30);
+    --session-after:rgba(201,122,46,0.16);
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
@@ -36,11 +66,24 @@
       var(--bg);
     color:var(--text); font-family:var(--font-body);
     padding:28px 20px 60px; min-height:100vh; -webkit-font-smoothing:antialiased;
+    transition:background-color .25s, color .25s;
+  }
+  html.light-mode body{
+    background:
+      radial-gradient(circle at 1px 1px, rgba(0,0,0,0.035) 1px, transparent 0) 0 0/28px 28px,
+      var(--bg);
   }
   .app{ max-width:1180px; margin:0 auto; }
 
   /* ---------- HEADER ---------- */
   header.top{ display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px; margin-bottom:16px; }
+  .header-right{ display:flex; align-items:center; gap:14px; }
+  .theme-toggle-btn{
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--panel-2);
+    color:var(--text-dim); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:border-color .2s, background .2s; flex-shrink:0;
+  }
+  .theme-toggle-btn:hover{ border-color:var(--copper); }
   .brand-eyebrow{ font-family:var(--font-mono); font-size:11px; letter-spacing:.16em; color:var(--copper); text-transform:uppercase; margin-bottom:6px; }
   h1{ font-family:var(--font-display); font-weight:700; font-size:28px; letter-spacing:-0.01em; }
   .subtitle{ color:var(--text-dim); font-size:13.5px; margin-top:6px; max-width:560px; line-height:1.55; }
@@ -82,14 +125,49 @@
   .pulse-status.open{ color:var(--mint); } .pulse-status.closed{ color:var(--text-faint); }
   .pulse-track{ flex:1; display:grid; grid-template-columns:repeat(24,1fr); gap:2px; height:16px; position:relative; }
   .pulse-cell{ background:var(--border-soft); border-radius:2px; }
-  .pulse-cell.open{ background:var(--copper-dim); }
+  .pulse-cell.pre{ background:var(--session-pre); }
+  .pulse-cell.main{ background:var(--session-main); }
+  .pulse-cell.after{ background:var(--session-after); }
   .pulse-row.live .pulse-cell{ background:var(--mint-dim); }
-  .pulse-row.live .pulse-cell.open{ background:rgba(95,227,179,0.32); }
+  .pulse-row.live .pulse-cell.main{ background:var(--mint-strong); }
+  .pulse-legend{ display:flex; gap:14px; margin-top:9px; flex-wrap:wrap; }
+  .legend-item{ display:flex; align-items:center; gap:5px; font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); }
+  .legend-swatch{ width:12px; height:8px; border-radius:2px; display:inline-block; flex-shrink:0; }
+  .legend-swatch.pre{ background:var(--session-pre); }
+  .legend-swatch.main{ background:var(--session-main); }
+  .legend-swatch.after{ background:var(--session-after); }
   .now-marker{ position:absolute; top:-4px; bottom:-4px; width:2px; background:var(--copper); box-shadow:0 0 8px rgba(226,144,63,0.7); z-index:3; border-radius:2px; }
-  .now-marker::after{ content:'NOW'; position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-family:var(--font-mono); font-size:9px; color:var(--copper); letter-spacing:.06em; }
+  .now-marker::after{ content:'지금'; position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-family:var(--font-mono); font-size:9px; color:var(--copper); letter-spacing:.06em; }
   .pulse-scale{ display:flex; padding-left:110px; margin-top:6px; }
   .pulse-scale span{ flex:1; font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); }
   .pulse-foot{ margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft); font-size:11.5px; color:var(--text-faint); line-height:1.6; }
+
+  /* ---------- FEAR & GREED INDEX ---------- */
+  .fng-block{ margin-top:16px; padding-top:14px; border-top:1px solid var(--border-soft); }
+  .fng-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px; }
+  .fng-title{ font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--text); }
+  .fng-updated{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
+  .fng-main{ display:flex; align-items:baseline; gap:10px; margin-bottom:10px; }
+  .fng-value{ font-family:var(--font-mono); font-size:28px; font-weight:700; color:var(--text-dim); }
+  .fng-value.extreme-fear, .fng-value.fear{ color:var(--coral); }
+  .fng-value.neutral{ color:var(--text-dim); }
+  .fng-value.greed, .fng-value.extreme-greed{ color:var(--mint); }
+  .fng-classification{ font-family:var(--font-display); font-size:14px; font-weight:600; color:var(--text-dim); }
+  .fng-classification.extreme-fear, .fng-classification.fear{ color:var(--coral); }
+  .fng-classification.neutral{ color:var(--text-dim); }
+  .fng-classification.greed, .fng-classification.extreme-greed{ color:var(--mint); }
+  .fng-gauge-track{
+    position:relative; height:8px; border-radius:5px; margin-bottom:6px;
+    background:linear-gradient(90deg, var(--coral), var(--text-faint) 50%, var(--mint));
+  }
+  .fng-gauge-marker{
+    position:absolute; top:-3px; width:3px; height:14px; background:var(--text); border-radius:2px;
+    box-shadow:0 0 4px rgba(0,0,0,0.5); transform:translateX(-50%); transition:left .4s;
+  }
+  .fng-scale-labels{ display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:9px; color:var(--text-faint); margin-bottom:10px; }
+  .fng-attribution{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); line-height:1.6; }
+  .fng-attribution a{ color:var(--text-faint); text-decoration:underline; }
+  .fng-attribution a:hover{ color:var(--text-dim); }
   .pulse-foot b{ color:var(--text-dim); font-weight:600; }
 
   /* ---------- CONTROLS ---------- */
@@ -160,19 +238,9 @@
   .sparkline-wrap canvas{ width:100%; height:100%; display:block; }
   .chart-hint{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); text-align:right; margin-bottom:6px; }
 
-  /* ---------- SENTIMENT: compact card indicator ---------- */
   .sentiment-mini{ margin-top:10px; }
-  .sentiment-mini-bar{ display:flex; height:6px; border-radius:4px; overflow:hidden; background:var(--border-soft); }
-  .sentiment-mini-bar .seg-buy{ background:var(--mint); }
-  .sentiment-mini-bar .seg-neutral{ background:var(--text-faint); }
-  .sentiment-mini-bar .seg-sell{ background:var(--coral); }
-  .sentiment-mini-label{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-top:5px; }
-  .sentiment-mini-label b{ font-weight:600; }
-  .sentiment-mini-label.buy b{ color:var(--mint); }
-  .sentiment-mini-label.sell b{ color:var(--coral); }
-  .sentiment-mini-label.neutral b{ color:var(--text-dim); }
 
-  /* ---------- REFERENCE INDICATOR (momentum + funding + board, NOT a prediction) ---------- */
+  /* ---------- REFERENCE INDICATOR (momentum + funding, NOT a prediction) ---------- */
   .indicator-row{ display:flex; align-items:center; gap:8px; margin-top:9px; }
   .indicator-track{ position:relative; flex:1; height:6px; background:var(--border-soft); border-radius:4px; }
   .indicator-zero{ position:absolute; left:50%; top:-2px; bottom:-2px; width:1px; background:var(--text-faint); }
@@ -183,25 +251,6 @@
   .indicator-label{ font-family:var(--font-mono); font-size:10px; font-weight:600; white-space:nowrap; }
   .indicator-label.up{ color:var(--mint); } .indicator-label.down{ color:var(--coral); } .indicator-label.flat{ color:var(--text-dim); }
   .indicator-caption{ font-family:var(--font-mono); font-size:9px; color:var(--text-faint); margin-top:4px; }
-
-  /* ---------- SENTIMENT: board summary panel ---------- */
-  .sentiment-panel{ margin-bottom:16px; padding:12px 14px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border-soft); }
-  .sentiment-panel-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
-  .sentiment-panel-head > span{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); letter-spacing:.05em; text-transform:uppercase; }
-  .period-tabs{ display:flex; gap:4px; }
-  .period-tab{ font-family:var(--font-mono); font-size:10px; padding:4px 9px; border-radius:100px; border:1px solid var(--border); background:var(--panel); color:var(--text-faint); cursor:pointer; }
-  .period-tab.active{ border-color:var(--copper); color:var(--copper); background:var(--copper-dim); }
-  .sentiment-bars{ display:flex; flex-direction:column; gap:8px; }
-  .sentiment-bar-row{ display:flex; align-items:center; gap:8px; }
-  .sentiment-bar-label{ width:34px; font-family:var(--font-mono); font-size:11px; flex-shrink:0; }
-  .sentiment-bar-label.buy{ color:var(--mint); } .sentiment-bar-label.sell{ color:var(--coral); } .sentiment-bar-label.neutral{ color:var(--text-dim); }
-  .sentiment-bar-track{ flex:1; height:8px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
-  .sentiment-bar-fill{ height:100%; border-radius:5px; }
-  .sentiment-bar-fill.buy{ background:var(--mint); } .sentiment-bar-fill.sell{ background:var(--coral); } .sentiment-bar-fill.neutral{ background:var(--text-faint); }
-  .sentiment-bar-pct{ width:58px; text-align:right; font-family:var(--font-mono); font-size:10.5px; color:var(--text-dim); flex-shrink:0; }
-  .sentiment-empty{ font-size:11.5px; color:var(--text-faint); text-align:center; padding:6px 0; }
-  .sentiment-dominant{ margin-top:9px; font-size:11.5px; text-align:center; font-family:var(--font-mono); }
-  .sentiment-dominant.buy{ color:var(--mint); } .sentiment-dominant.sell{ color:var(--coral); } .sentiment-dominant.neutral{ color:var(--text-dim); }
 
   .card-foot{ display:flex; justify-content:space-between; font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); padding-top:9px; border-top:1px solid var(--border-soft); }
   .card-foot .hi{ color:var(--mint); } .card-foot .lo{ color:var(--coral); }
@@ -274,10 +323,6 @@
   .board-post{ border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; background:var(--panel-2); }
   .board-post-head{ display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap; }
   .board-nick{ font-family:var(--font-mono); font-weight:600; font-size:12px; color:var(--copper); }
-  .board-sentiment{ font-family:var(--font-mono); font-size:9.5px; padding:1px 7px; border-radius:100px; }
-  .board-sentiment.buy{ color:var(--mint); background:var(--mint-dim); }
-  .board-sentiment.sell{ color:var(--coral); background:var(--coral-dim); }
-  .board-sentiment.neutral{ color:var(--text-dim); background:var(--border-soft); }
   .board-time{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); }
   .board-text{ font-size:12.5px; color:var(--text); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
   .board-empty{ font-size:12px; color:var(--text-faint); padding:12px 0; text-align:center; }
@@ -448,12 +493,15 @@
   <header class="top">
     <div>
       <div class="brand-eyebrow">binance perp · krw / usd 환산 비교</div>
-      <h1>Weekend Desk</h1>
+      <h1>에브리데이 스톡</h1>
       <p class="subtitle">바이낸스 무기한선물 시세를 실시간 환율로 환산해 직전 종가와 바로 비교합니다. KRX·나스닥이 쉬는 시간에도 흐름을 확인하세요.</p>
     </div>
-    <div class="clock-block">
-      <div class="clock" id="clockKST">--:--:--</div>
-      <div class="clock-date" id="dateKST">KST</div>
+    <div class="header-right">
+      <button class="theme-toggle-btn" id="themeToggleBtn" title="라이트/다크 모드 전환">☀️</button>
+      <div class="clock-block">
+        <div class="clock" id="clockKST">--:--:--</div>
+        <div class="clock-date" id="dateKST">KST</div>
+      </div>
     </div>
   </header>
 
@@ -487,19 +535,42 @@
       <div class="pulse-status" id="statusKRX">···</div>
     </div>
     <div class="pulse-row" id="rowNASDAQ">
-      <div class="pulse-label">NASDAQ</div>
+      <div class="pulse-label">나스닥</div>
       <div class="pulse-track" id="trackNASDAQ"></div>
       <div class="pulse-status" id="statusNASDAQ">···</div>
     </div>
     <div class="pulse-row live" id="rowPERP">
-      <div class="pulse-label">Binance Perp</div>
+      <div class="pulse-label">바이낸스 퍼프</div>
       <div class="pulse-track" id="trackPERP"></div>
-      <div class="pulse-status open">24 / 7</div>
+      <div class="pulse-status open">연중무휴</div>
     </div>
     <div class="pulse-scale">
       <span>00</span><span>03</span><span>06</span><span>09</span><span>12</span><span>15</span><span>18</span><span>21</span>
     </div>
+    <div class="pulse-legend">
+      <span class="legend-item"><span class="legend-swatch pre"></span>프리장</span>
+      <span class="legend-item"><span class="legend-swatch main"></span>본장</span>
+      <span class="legend-item"><span class="legend-swatch after"></span>애프터장</span>
+    </div>
     <div class="pulse-foot" id="pulseFoot">시간 계산 중…</div>
+
+    <div class="fng-block">
+      <div class="fng-head">
+        <span class="fng-title">🎭 미국 증시 공포탐욕지수</span>
+        <span class="fng-updated" id="fngUpdated">불러오는 중…</span>
+      </div>
+      <div class="fng-main">
+        <span class="fng-value" id="fngValue">-</span>
+        <span class="fng-classification" id="fngClassification">-</span>
+      </div>
+      <div class="fng-gauge-track">
+        <div class="fng-gauge-marker" id="fngMarker"></div>
+      </div>
+      <div class="fng-scale-labels">
+        <span>극단적 공포</span><span>공포</span><span>중립</span><span>탐욕</span><span>극단적 탐욕</span>
+      </div>
+      <div class="fng-attribution">S&P500·나스닥100·다우·러셀2000(VIX 변동성 포함) 블렌드 기준 미국 증시 전체 심리 지수예요(이 페이지가 추종하는 개별 반도체 종목의 심리와는 별개) · 데이터 제공: <a href="https://feargreedchart.com" target="_blank" rel="noopener">FearGreedChart.com</a></div>
+    </div>
   </div>
 
   <div class="controls">
@@ -539,18 +610,6 @@
 
     <div class="board-tabs" id="boardTabs"></div>
 
-    <div class="sentiment-panel">
-      <div class="sentiment-panel-head">
-        <span>심리 요약 · <span id="sentimentPanelSymbol"></span></span>
-        <div class="period-tabs" id="periodTabs">
-          <button class="period-tab active" data-period="1">오늘(24h)</button>
-          <button class="period-tab" data-period="7">이번주(7일)</button>
-          <button class="period-tab" data-period="30">이번달(30일)</button>
-        </div>
-      </div>
-      <div id="sentimentSummary"></div>
-    </div>
-
     <div class="codename-bar">
       <button class="codename-create-btn" id="codenameCreateBtn">🆔 익명 아이디 만들기</button>
       <span class="codename-tag" id="codenameTag" style="display:none;"></span>
@@ -559,11 +618,6 @@
     </div>
 
     <div class="board-form">
-      <select id="boardSentiment">
-        <option value="neutral">중립</option>
-        <option value="buy">매수</option>
-        <option value="sell">매도</option>
-      </select>
       <textarea id="boardText" placeholder="이 종목에 대한 의견을 무기명으로 남겨보세요"></textarea>
       <button id="boardSubmit">등록</button>
     </div>
@@ -578,7 +632,7 @@
   </div>
 
   <div class="disclaimer">
-    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USD/KRW 환율은 공개 환율 API를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판 글은 실명이나 로그인 없이 시스템이 자동 발급하는 "코드네임"(예: 익명-7F2A)으로 작성되며, 이 화면을 여는 모든 사람에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 코드네임은 최초 1회 보여주는 복구 코드로만 다른 기기에서 재사용할 수 있고, 복구 코드를 잃어버리면 그 코드네임은 되찾을 수 없습니다. 욕설 등 부적절한 표현은 자동 필터로 등록이 제한되며, 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. "상승/하락 이유 보기" 버튼은 실제 24시간 가격 변동 방향에 따라 구글 뉴스에서 관련 기사 목록을 가져와 보여주며(불러오지 못하면 검색 링크로 대체), 이 페이지가 직접 이유를 분석·작성하는 것은 아닙니다. <b>"증권사 목표가 컨센서스"</b>는 실시간 자동 수집이 아니라 직접 입력·수정하는 값이며(작성 시점 기준 수치를 넣어뒀어요), 목표가는 증권사 애널리스트의 예측치일 뿐 실제 주가를 보장하지 않습니다. <b>SOXL</b>은 반도체 지수를 매일 3배로 추종하는 레버리지 ETF로, 일일 리밸런싱 구조상 지수가 횡보하기만 해도 가치가 잠식(decay)될 수 있어 단기 매매용으로 설계된 상품입니다. 장기 보유 목적에는 적합하지 않을 수 있습니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
+    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USD/KRW 환율은 공개 환율 API를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판 글은 실명이나 로그인 없이 시스템이 자동 발급하는 "코드네임"(예: 익명-7F2A)으로 작성되며, 이 화면을 여는 모든 사람에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 코드네임은 최초 1회 보여주는 복구 코드로만 다른 기기에서 재사용할 수 있고, 복구 코드를 잃어버리면 그 코드네임은 되찾을 수 없습니다. 욕설 등 부적절한 표현은 자동 필터로 등록이 제한되며, 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비를 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. "상승/하락 이유 보기" 버튼은 실제 24시간 가격 변동 방향에 따라 구글 뉴스(국내 언론 + 블룸버그·로이터 등 해외 영어권 언론 포함)에서 관련 기사 목록을 가져와 보여주며(불러오지 못하면 검색 링크로 대체), 이 페이지가 직접 이유를 분석·작성하는 것은 아닙니다. <b>"증권사 목표가 컨센서스"</b>는 실시간 자동 수집이 아니라 직접 입력·수정하는 값이며(작성 시점 기준 수치를 넣어뒀어요), 목표가는 증권사 애널리스트의 예측치일 뿐 실제 주가를 보장하지 않습니다. <b>SOXL</b>은 반도체 지수를 매일 3배로 추종하는 레버리지 ETF로, 일일 리밸런싱 구조상 지수가 횡보하기만 해도 가치가 잠식(decay)될 수 있어 단기 매매용으로 설계된 상품입니다. 장기 보유 목적에는 적합하지 않을 수 있습니다. <b>"공포탐욕지수"</b>는 FearGreedChart.com에서 제공하는 미국 증시 전체(VIX·S&P500·나스닥100·다우·러셀2000 블렌드)의 심리 지수이며, 이 페이지가 추종하는 개별 종목의 심리와는 무관합니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
   </div>
 
   <div class="legal-section">
@@ -588,7 +642,7 @@
     <details class="legal-item">
       <summary>이용약관</summary>
       <div class="legal-body">
-        <p><b>제1조 (목적)</b> 이 약관은 Weekend Desk(이하 "사이트")가 제공하는 서비스의 이용 조건과 절차, 이용자와 운영자의 권리·의무를 규정합니다.</p>
+        <p><b>제1조 (목적)</b> 이 약관은 에브리데이 스톡(이하 "사이트")이 제공하는 서비스의 이용 조건과 절차, 이용자와 운영자의 권리·의무를 규정합니다.</p>
         <p><b>제2조 (서비스 내용)</b> 사이트는 바이낸스 무기한선물 시세를 환율로 환산한 참고용 추정 시세, 참고용 심리 지표, 종목 게시판, 증권사 목표가 참고 정보 등을 제공합니다. 사이트는 증권사·거래소가 아니며 매매를 중개하지 않습니다.</p>
         <p><b>제3조 (이용자 의무)</b> 이용자는 다음 행위를 해서는 안 됩니다.</p>
         <ul>
@@ -607,10 +661,10 @@
     <details class="legal-item">
       <summary>개인정보 처리방침</summary>
       <div class="legal-body">
-        <p>Weekend Desk는 개인정보보호법 등 관련 법령을 준수하며, 다음과 같이 개인정보를 처리합니다.</p>
+        <p>에브리데이 스톡은 개인정보보호법 등 관련 법령을 준수하며, 다음과 같이 개인정보를 처리합니다.</p>
         <p><b>1. 수집하는 항목</b></p>
         <ul>
-          <li>게시판 이용 시: 게시글 내용, 작성 시각, 매수/중립/매도 선택값, 시스템이 자동 발급하는 코드네임(실명이 아닌 임의 문자열)</li>
+          <li>게시판 이용 시: 게시글 내용, 작성 시각, 시스템이 자동 발급하는 코드네임(실명이 아닌 임의 문자열)</li>
           <li>코드네임 복구 코드는 원문이 아니라 일방향 해시(SHA-256)로만 저장되어, 운영자를 포함해 누구도 저장된 값으로부터 원래 복구 코드를 복원할 수 없습니다</li>
           <li>자동 수집: 접속 IP, 브라우저 정보, 쿠키 등 서비스 운영·보안 및 광고 게재 과정에서 자동으로 생성되는 정보</li>
         </ul>
@@ -776,7 +830,7 @@
   // baselineDefault is a *seed* value only — real defaults should be refreshed by the user each trading day.
   const INSTRUMENTS = [
     { symbol:'SKHYNIXUSDT', nameKo:'SK하이닉스 (국내 KRX)', nameEn:'SK Hynix — Korea Exchange',  group:'gridKR',  market:'KRX',    baseCcy:'KRW', baseDefault:2180000, searchName:'SK하이닉스', targetDefault:3547917 },
-    { symbol:'SKHYUSDT',    nameKo:'SK하이닉스 (나스닥 ADR)', nameEn:'SK Hynix ADR — Nasdaq (SKHY)', group:'gridKR', market:'NASDAQ', baseCcy:'USD', baseDefault:168.01, searchName:'SK하이닉스 ADR', targetDefault:null },
+    { symbol:'SKHYUSDT',    nameKo:'SK하이닉스 (나스닥 ADR)', nameEn:'SK Hynix ADR — Nasdaq (SKHY)', group:'gridKR', market:'NASDAQ', baseCcy:'USD', baseDefault:184.87, searchName:'SK하이닉스 ADR', targetDefault:290.00 },
     { symbol:'SAMSUNGUSDT', nameKo:'삼성전자',   nameEn:'Samsung Electronics', group:'gridKR', market:'KRX', baseCcy:'KRW', baseDefault:285000, targetDefault:513958 },
     { symbol:'SNDKUSDT',    nameKo:'샌디스크',   nameEn:'SanDisk',   group:'gridUS',  market:'NASDAQ', baseCcy:'USD', baseDefault:1915.92, targetDefault:2035 },
     { symbol:'MUUSDT',      nameKo:'마이크론',   nameEn:'Micron Technology', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:979.30, targetDefault:1486 },
@@ -843,7 +897,7 @@
           ${cardBodyTemplate(inst)}
         </div>`;
       document.getElementById(inst.group).appendChild(el);
-      state[inst.symbol] = { closes:[], ok:null, updatedAt:null, lastPrice:null, high:null, low:null, changePct:null, baseline:inst.baseDefault, target:inst.targetDefault, fundingRate:null, boardStats:null };
+      state[inst.symbol] = { closes:[], ok:null, updatedAt:null, lastPrice:null, high:null, low:null, changePct:null, baseline:inst.baseDefault, target:inst.targetDefault, fundingRate:null };
     });
   }
 
@@ -909,6 +963,10 @@
   }
 
   /* ---------- Sparkline ---------- */
+  function cssVar(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
   function drawSparkline(canvas, closes, up){
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.clientWidth, h = canvas.clientHeight;
@@ -919,7 +977,7 @@
     const min = Math.min(...closes), max = Math.max(...closes);
     const range = (max-min) || 1, pad = 3;
     const stepX = (w-pad*2)/(closes.length-1);
-    const color = up ? '#5FE3B3' : '#F2666E';
+    const color = up ? cssVar('--mint') : cssVar('--coral');
     ctx.beginPath();
     closes.forEach((c,i)=>{
       const x = pad + i*stepX;
@@ -954,6 +1012,42 @@
     const stored = loadStoredFx();
     if (stored){ fxRate = stored; fxChangeRate = null; fxSource='마지막 저장값 (오프라인)'; fxManual = true; }
     else { fxSource = '환율 조회 실패 — 직접 입력 필요'; fxManual = true; }
+  }
+
+  /* ---------- US Stock Market Fear & Greed Index (feargreedchart.com — VIX/SPY/QQQ/DIA/IWM 블렌드) ---------- */
+  function fngLabel(score){
+    if (score<=20) return { ko:'극단적 공포', cls:'extreme-fear' };
+    if (score<=40) return { ko:'공포',       cls:'fear' };
+    if (score<=60) return { ko:'중립',       cls:'neutral' };
+    if (score<=80) return { ko:'탐욕',       cls:'greed' };
+    return { ko:'극단적 탐욕', cls:'extreme-greed' };
+  }
+  async function fetchFearGreedIndex(){
+    try{
+      const res = await fetch('https://feargreedchart.com/api/?action=all');
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      const data = await res.json();
+      const score = data && data.score && data.score.score;
+      if (score==null || isNaN(score)) throw new Error('no score');
+      return { value: Math.round(score), ts: data.ts || Date.now() };
+    }catch(e){ console.error('fetchFearGreedIndex error', e); return null; }
+  }
+  async function renderFearGreed(){
+    const valueEl = document.getElementById('fngValue');
+    const classEl = document.getElementById('fngClassification');
+    const markerEl = document.getElementById('fngMarker');
+    const updatedEl = document.getElementById('fngUpdated');
+    const result = await fetchFearGreedIndex();
+    if (!result){
+      if (classEl) classEl.textContent = '지수를 불러오지 못했어요';
+      if (updatedEl) updatedEl.textContent = '';
+      return;
+    }
+    const label = fngLabel(result.value);
+    if (valueEl){ valueEl.textContent = result.value; valueEl.className = 'fng-value ' + label.cls; }
+    if (classEl){ classEl.textContent = label.ko; classEl.className = 'fng-classification ' + label.cls; }
+    if (markerEl) markerEl.style.left = result.value + '%';
+    if (updatedEl) updatedEl.textContent = timeAgo(result.ts) + ' 갱신';
   }
 
   function renderFx(){
@@ -1187,19 +1281,38 @@
     let hour = parseInt(map.hour,10); if(hour===24) hour=0;
     return { weekday:wd, hourDec: hour + parseInt(map.minute,10)/60 + parseInt(map.second,10)/3600 };
   }
-  function isOpen(now, openDec, closeDec){
-    if (now.weekday===0 || now.weekday===6) return false;
-    return now.hourDec>=openDec && now.hourDec<closeDec;
+  // 프리장/본장/애프터장 3단계로 판정 (정확한 소수점 시각 기준 — 상태 배지·카드 뱃지용)
+  function classifySessionPrecise(now, preOpen, mainOpen, mainClose, afterClose){
+    if (now.weekday===0 || now.weekday===6) return 'closed';
+    const h = now.hourDec;
+    if (h>=mainOpen && h<mainClose) return 'main';
+    if (h>=preOpen && h<mainOpen) return 'pre';
+    if (h>=mainClose && h<afterClose) return 'after';
+    return 'closed';
   }
   function isHourShaded(h, openH, closeH){
     if (openH < closeH) return h>=openH && h<closeH;
     return h>=openH || h<closeH;
   }
-  function buildTrack(elId, openFn){
+  // 24시간 타임라인 셀(정수 시 단위) 판정 — 그래픽용, 약간의 반올림 근사가 있어요(예: KRX 15:30 마감을 16시 칸까지로 표시)
+  function classifyHourKRX(h){
+    if (isHourShaded(h, 9, 16)) return 'main';
+    if (isHourShaded(h, 8, 9)) return 'pre';
+    if (isHourShaded(h, 16, 18)) return 'after';
+    return null;
+  }
+  function sessionBadge(session){
+    return session==='pre' ? '프리' : session==='main' ? '본장' : session==='after' ? '애프터' : '휴장';
+  }
+  function sessionKo(session){
+    return session==='pre' ? '프리장' : session==='main' ? '본장' : session==='after' ? '애프터장' : '휴장';
+  }
+  function buildTrack(elId, classifyFn){
     const track = document.getElementById(elId); track.innerHTML = '';
     for (let h=0; h<24; h++){
       const cell = document.createElement('div');
-      cell.className = 'pulse-cell' + (openFn(h) ? ' open' : '');
+      const session = classifyFn(h);
+      cell.className = 'pulse-cell' + (session ? ' '+session : '');
       track.appendChild(cell);
     }
   }
@@ -1207,19 +1320,30 @@
   function renderPulse(){
     const seoul = getZonedNow('Asia/Seoul');
     const ny = getZonedNow('America/New_York');
-    const krxOpenNow = isOpen(seoul, 9.0, 15.5);
-    const nasdaqOpenNow = isOpen(ny, 9.5, 16.0);
     const krxWeekday = seoul.weekday>=1 && seoul.weekday<=5;
     const nasdaqWeekday = ny.weekday>=1 && ny.weekday<=5;
 
+    // KRX(KST): 프리 08:00–09:00 · 본장 09:00–15:30 · 애프터 15:30–18:00
+    const krxSession = classifySessionPrecise(seoul, 8.0, 9.0, 15.5, 18.0);
+    // NASDAQ(ET): 프리 04:00–09:30 · 본장 09:30–16:00 · 애프터 16:00–20:00
+    const nasdaqSession = classifySessionPrecise(ny, 4.0, 9.5, 16.0, 20.0);
+
     let offset = Math.round(seoul.hourDec - ny.hourDec);
     if (offset < 0) offset += 24;
-    const nasdaqOpenKST = Math.floor((9.5+offset) % 24);
-    const nasdaqCloseKST = Math.floor((16+offset) % 24);
+    const nasdaqPreOpenKST = Math.floor((4+offset) % 24);
+    const nasdaqMainOpenKST = Math.floor((9.5+offset) % 24);
+    const nasdaqMainCloseKST = Math.floor((16+offset) % 24);
+    const nasdaqAfterCloseKST = Math.floor((20+offset) % 24);
+    function classifyHourNASDAQ(h){
+      if (isHourShaded(h, nasdaqMainOpenKST, nasdaqMainCloseKST)) return 'main';
+      if (isHourShaded(h, nasdaqPreOpenKST, nasdaqMainOpenKST)) return 'pre';
+      if (isHourShaded(h, nasdaqMainCloseKST, nasdaqAfterCloseKST)) return 'after';
+      return null;
+    }
 
-    buildTrack('trackKRX', h => krxWeekday && isHourShaded(h, 9, 16));
-    buildTrack('trackNASDAQ', h => nasdaqWeekday && isHourShaded(h, nasdaqOpenKST, nasdaqCloseKST));
-    buildTrack('trackPERP', () => true);
+    buildTrack('trackKRX', h => krxWeekday ? classifyHourKRX(h) : null);
+    buildTrack('trackNASDAQ', h => nasdaqWeekday ? classifyHourNASDAQ(h) : null);
+    buildTrack('trackPERP', () => 'main');
 
     document.querySelectorAll('.now-marker').forEach(n=>n.remove());
     const pct = (seoul.hourDec/24*100).toFixed(2) + '%';
@@ -1230,23 +1354,23 @@
     });
 
     const statusKRX = document.getElementById('statusKRX');
-    statusKRX.textContent = krxOpenNow ? 'OPEN' : 'CLOSED';
-    statusKRX.className = 'pulse-status ' + (krxOpenNow?'open':'closed');
+    statusKRX.textContent = sessionBadge(krxSession);
+    statusKRX.className = 'pulse-status ' + (krxSession==='closed' ? 'closed' : 'open');
     const statusNASDAQ = document.getElementById('statusNASDAQ');
-    statusNASDAQ.textContent = nasdaqOpenNow ? 'OPEN' : 'CLOSED';
-    statusNASDAQ.className = 'pulse-status ' + (nasdaqOpenNow?'open':'closed');
+    statusNASDAQ.textContent = sessionBadge(nasdaqSession);
+    statusNASDAQ.className = 'pulse-status ' + (nasdaqSession==='closed' ? 'closed' : 'open');
 
     document.getElementById('weekendTag').classList.toggle('show', seoul.weekday===0 || seoul.weekday===6);
 
     document.getElementById('pulseFoot').innerHTML =
-      `<b>KRX</b> 09:00–15:30 (KST, 월~금) · <b>NASDAQ</b> 09:30–16:00 (ET, 월~금 · 현재 KST ${String(nasdaqOpenKST).padStart(2,'0')}:xx–${String(nasdaqCloseKST).padStart(2,'0')}:xx 환산) · <b>Binance Perp</b> 연중무휴 24시간`;
+      `<b>KRX</b> 프리 08:00–09:00 · 본장 09:00–15:30 · 애프터 15:30–18:00 (KST, 월~금) · <b>NASDAQ</b> 프리 04:00–09:30 · 본장 09:30–16:00 · 애프터 16:00–20:00 (ET, 월~금 · 현재 KST 환산 시작 ${String(nasdaqPreOpenKST).padStart(2,'0')}:xx) · <b>Binance Perp</b> 연중무휴 24시간`;
 
     // update per-card market pills
     INSTRUMENTS.forEach(inst=>{
       const pill = document.getElementById('mkt-'+inst.symbol);
       if (!pill) return;
-      if (inst.market==='KRX'){ pill.textContent = krxOpenNow?'국내장중':'국내장마감'; pill.className='mkt-pill'+(krxOpenNow?' open':''); }
-      else if (inst.market==='NASDAQ'){ pill.textContent = nasdaqOpenNow?'미국장중':'미국장마감'; pill.className='mkt-pill'+(nasdaqOpenNow?' open':''); }
+      if (inst.market==='KRX'){ pill.textContent = krxSession==='closed' ? '국내장마감' : '국내 '+sessionKo(krxSession); pill.className='mkt-pill'+(krxSession!=='closed'?' open':''); }
+      else if (inst.market==='NASDAQ'){ pill.textContent = nasdaqSession==='closed' ? '미국장마감' : '미국 '+sessionKo(nasdaqSession); pill.className='mkt-pill'+(nasdaqSession!=='closed'?' open':''); }
       else { pill.textContent='비상장'; pill.className='mkt-pill'; }
     });
 
@@ -1401,42 +1525,9 @@
     return Math.floor(s/86400)+'일 전';
   }
 
-  /* ---------- Sentiment aggregation (shared by card mini + board panel) ---------- */
-  function computeSentimentStats(posts, days){
-    const cutoff = Date.now() - days*24*60*60*1000;
-    const recent = (posts||[]).filter(p=>p.ts>=cutoff);
-    const counts = { buy:0, neutral:0, sell:0 };
-    recent.forEach(p=>{ counts[p.sentiment==='buy'?'buy':p.sentiment==='sell'?'sell':'neutral']++; });
-    return { buy:counts.buy, neutral:counts.neutral, sell:counts.sell, total:recent.length };
-  }
-  function dominantSentiment(stats){
-    if (stats.total===0) return null;
-    if (stats.buy>=stats.sell && stats.buy>=stats.neutral) return 'buy';
-    if (stats.sell>=stats.buy && stats.sell>=stats.neutral) return 'sell';
-    return 'neutral';
-  }
   function renderMiniSentiment(el, symbol){
     if (!el) return;
     const s = state[symbol];
-    const stats = s.boardStats;
-
-    let boardHtml = '<div class="sentiment-mini-label">게시판 심리 불러오는 중…</div>';
-    if (stats){
-      if (stats.total===0){
-        boardHtml = '<div class="sentiment-mini-label">24h 게시판 의견 없음</div>';
-      } else {
-        const buyPct = stats.buy/stats.total*100, neuPct = stats.neutral/stats.total*100, sellPct = stats.sell/stats.total*100;
-        const dom = dominantSentiment(stats);
-        const domLabel = dom==='buy' ? '매수 우세' : dom==='sell' ? '매도 우세' : '중립 우세';
-        boardHtml = `
-          <div class="sentiment-mini-bar">
-            <div class="seg-buy" style="width:${buyPct}%"></div>
-            <div class="seg-neutral" style="width:${neuPct}%"></div>
-            <div class="seg-sell" style="width:${sellPct}%"></div>
-          </div>
-          <div class="sentiment-mini-label ${dom}">게시판(24h) <b>${domLabel}</b> · 매수${stats.buy} 중립${stats.neutral} 매도${stats.sell}</div>`;
-      }
-    }
 
     const indicator = computeIndicator(symbol);
     let indicatorHtml = '';
@@ -1452,7 +1543,7 @@
           </div>
           <div class="indicator-label ${cls}">${label}</div>
         </div>
-        <div class="indicator-caption">참고용 지표 · 예측 아님 · 모멘텀+펀딩비+게시판 종합</div>`;
+        <div class="indicator-caption">참고용 지표 · 예측 아님 · 모멘텀+펀딩비 종합</div>`;
     }
 
     let reasonHtml = '';
@@ -1463,7 +1554,7 @@
       reasonHtml = `<button class="reason-btn ${cls}" data-reason-symbol="${symbol}">${label}</button>`;
     }
 
-    el.innerHTML = boardHtml + indicatorHtml + reasonHtml;
+    el.innerHTML = indicatorHtml + reasonHtml;
   }
 
   /* ---------- Reference indicator (NOT a prediction — see disclaimer) ---------- */
@@ -1472,59 +1563,29 @@
     const parts = [];
     if (s.changePct!=null) parts.push(Math.max(-1, Math.min(1, s.changePct/5)));               // ±5% 24h move → full scale
     if (s.fundingRate!=null) parts.push(Math.max(-1, Math.min(1, s.fundingRate/0.0005)));       // ±0.05% funding → full scale
-    if (s.boardStats && s.boardStats.total>0) parts.push((s.boardStats.buy - s.boardStats.sell)/s.boardStats.total);
     if (!parts.length) return null;
     return parts.reduce((a,b)=>a+b,0)/parts.length;
   }
 
-  function periodLabelFor(days){ return days===1 ? '오늘(24h)' : days===7 ? '이번주(7일)' : '이번달(30일)'; }
-  function renderSentimentPanel(el, stats, periodLabel){
-    if (!el) return;
-    if (stats.total===0){
-      el.innerHTML = `<div class="sentiment-empty">${periodLabel} 동안 등록된 의견이 없어요</div>`;
-      return;
-    }
-    const rows = [ {key:'buy',label:'매수',count:stats.buy}, {key:'neutral',label:'중립',count:stats.neutral}, {key:'sell',label:'매도',count:stats.sell} ];
-    const bars = rows.map(r=>{
-      const pct = r.count/stats.total*100;
-      return `
-        <div class="sentiment-bar-row">
-          <span class="sentiment-bar-label ${r.key}">${r.label}</span>
-          <div class="sentiment-bar-track"><div class="sentiment-bar-fill ${r.key}" style="width:${pct}%"></div></div>
-          <span class="sentiment-bar-pct">${pct.toFixed(0)}% (${r.count})</span>
-        </div>`;
-    }).join('');
-    const dom = dominantSentiment(stats);
-    const domLabel = dom==='buy' ? '매수' : dom==='sell' ? '매도' : '중립';
-    el.innerHTML = `<div class="sentiment-bars">${bars}</div><div class="sentiment-dominant ${dom}">${periodLabel} 총 ${stats.total}건 · <b>${domLabel}</b> 심리 우세</div>`;
-  }
-  async function refreshCardSentiment(inst){
-    const posts = await fetchPosts(inst.symbol);
-    state[inst.symbol].boardStats = computeSentimentStats(posts, 1);
-    renderMiniSentiment(document.getElementById('sentimentMini-'+inst.symbol), inst.symbol);
-  }
-  async function refreshAllCardSentiments(){
-    await Promise.allSettled(INSTRUMENTS.map(refreshCardSentiment));
-  }
-
   let currentBoardPosts = [];
-  let activeBoardPeriodDays = 1;
 
   function renderPostList(){
     const listEl = document.getElementById('boardList');
+    if (!db){
+      listEl.innerHTML = '<div class="board-empty">⚠ 게시판 연결에 실패했어요. 광고 차단 확장 프로그램을 꺼보시거나 새로고침 해주세요.</div>';
+      return;
+    }
     if (!currentBoardPosts.length){
       listEl.innerHTML = '<div class="board-empty">아직 의견이 없어요. 첫 글을 남겨보세요.</div>';
       return;
     }
     listEl.innerHTML = currentBoardPosts.slice().reverse().map(p=>{
-      const sentLabel = p.sentiment==='buy' ? '매수' : p.sentiment==='sell' ? '매도' : '중립';
       const codename = (p.codename || '익명').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const text = (p.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `
         <div class="board-post${p.reported ? ' reported' : ''}">
           <div class="board-post-head">
             <span class="board-nick">${codename}</span>
-            <span class="board-sentiment ${p.sentiment||'neutral'}">${sentLabel}</span>
             ${p.reported ? '<span class="reported-badge">신고됨</span>' : ''}
             <span class="head-spacer"></span>
             <span class="board-time">${boardTimeAgo(p.ts)}</span>
@@ -1533,11 +1594,6 @@
           <div class="board-text">${text}</div>
         </div>`;
     }).join('');
-  }
-
-  function renderSentimentSummary(){
-    const stats = computeSentimentStats(currentBoardPosts, activeBoardPeriodDays);
-    renderSentimentPanel(document.getElementById('sentimentSummary'), stats, periodLabelFor(activeBoardPeriodDays));
   }
 
   let toastTimer = null;
@@ -1569,20 +1625,59 @@
   }
 
   // Google 뉴스 RSS는 브라우저에서 직접 CORS가 막혀있어, rss2json(CORS 프록시 겸 XML→JSON 변환)을 거쳐서 받아옵니다.
-  async function fetchNewsList(query){
+  // 하나의 RSS 주소를 rss2json → allorigins 순으로 시도해서 기사 배열을 가져옴 (둘 다 실패하면 빈 배열)
+  async function fetchRssItems(rssUrl){
     try{
-      const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
       const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}`;
       const res = await fetch(apiUrl);
       if (!res.ok) throw new Error('rss2json http '+res.status);
       const data = await res.json();
       if (data.status !== 'ok' || !Array.isArray(data.items)) throw new Error('bad rss2json response');
-      return data.items.slice(0,6).map(it=>{
+      const items = data.items.map(it=>{
         // Google 뉴스 제목은 보통 "제목 - 언론사" 형태라 언론사만 따로 분리
         const m = /^(.*)\s-\s([^-]+)$/.exec(it.title||'');
         return { title: m ? m[1] : (it.title||''), source: m ? m[2] : '', link: it.link };
       });
-    }catch(e){ console.error('fetchNewsList error', e); return null; } // null = 실패 (링크 목록만 보여줌)
+      if (items.length) return items;
+      throw new Error('rss2json returned no items');
+    }catch(e){ console.error('fetchRssItems rss2json failed', e); }
+
+    try{
+      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(rssUrl)}`;
+      const res = await fetch(proxyUrl);
+      if (!res.ok) throw new Error('allorigins http '+res.status);
+      const xmlText = await res.text();
+      const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+      const items = Array.from(doc.querySelectorAll('item')).map(item=>{
+        const rawTitle = item.querySelector('title') ? item.querySelector('title').textContent : '';
+        const link = item.querySelector('link') ? item.querySelector('link').textContent : '';
+        const m = /^(.*)\s-\s([^-]+)$/.exec(rawTitle);
+        return { title: m ? m[1] : rawTitle, source: m ? m[2] : '', link };
+      });
+      if (items.length) return items;
+      throw new Error('allorigins returned no items');
+    }catch(e){ console.error('fetchRssItems allorigins fallback failed', e); }
+
+    return [];
+  }
+
+  // "SK Hynix — Korea Exchange" 같은 nameEn에서 부제 잘라내기 → "SK Hynix"
+  function cleanEnglishName(inst){
+    return (inst.nameEn || inst.nameKo || '').split(' — ')[0].split(' (')[0].trim();
+  }
+
+  // 국내(한국어) 뉴스 + 해외(영어 — 블룸버그·로이터·CNBC 등) 뉴스를 같이 검색해서 섞어요
+  async function fetchNewsList(inst, directionLabel){
+    const koQuery = `${inst.searchName || inst.nameKo} 주가 ${directionLabel}`;
+    const enDirection = directionLabel==='상승' ? 'stock rises' : 'stock falls';
+    const enQuery = `${cleanEnglishName(inst)} ${enDirection}`;
+
+    const koUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(koQuery)}&hl=ko&gl=KR&ceid=KR:ko`;
+    const enUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(enQuery)}&hl=en-US&gl=US&ceid=US:en`;
+
+    const [koItems, enItems] = await Promise.all([fetchRssItems(koUrl), fetchRssItems(enUrl)]);
+    const merged = koItems.slice(0,4).concat(enItems.slice(0,4)).slice(0,7);
+    return merged.length ? merged : null; // null = 실패 — 호출부에서 검색 링크로 대체
   }
 
   function renderNewsItems(items){
@@ -1609,7 +1704,6 @@
     if (!inst || !s) return;
     const up = s.changePct > 0;
     const directionLabel = up ? '상승' : '하락';
-    const query = `${inst.searchName || inst.nameKo} 주가 ${directionLabel}`;
     document.getElementById('reasonModalOverlay').classList.add('show');
     document.getElementById('reasonModalAdView').style.display = '';
     document.getElementById('reasonModalContent').style.display = 'none';
@@ -1618,7 +1712,7 @@
     document.getElementById('reasonModalLinks').innerHTML = buildReasonLinks(inst, directionLabel).map(l=>
       `<a class="reason-link" href="${l.url}" target="_blank" rel="noopener">${l.label} <span class="arrow">↗</span></a>`
     ).join('');
-    fetchNewsList(query).then(renderNewsItems);
+    fetchNewsList(inst, directionLabel).then(renderNewsItems);
   }
   function closeReasonModal(){
     document.getElementById('reasonModalOverlay').classList.remove('show');
@@ -1678,7 +1772,7 @@
     candles.forEach((c,i)=>{
       const x = padL + i*slot + slot/2;
       const up = c.c >= c.o;
-      const color = up ? '#5FE3B3' : '#F2666E';
+      const color = up ? cssVar('--mint') : cssVar('--coral');
       ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(x, y(c.h)); ctx.lineTo(x, y(c.l)); ctx.stroke();
       const yOpen=y(c.o), yClose=y(c.c);
@@ -1687,11 +1781,11 @@
     });
 
     ctx.font = '10px JetBrains Mono, monospace'; ctx.textAlign = 'left';
-    ctx.fillStyle = '#8C96A6';
+    ctx.fillStyle = cssVar('--text-dim');
     ctx.fillText(fmtRaw(max), plotW+padL+4, y(max)+4);
     ctx.fillText(fmtRaw(min), plotW+padL+4, y(min)+4);
     const lastC = candles[candles.length-1];
-    ctx.fillStyle = lastC.c >= lastC.o ? '#5FE3B3' : '#F2666E';
+    ctx.fillStyle = lastC.c >= lastC.o ? cssVar('--mint') : cssVar('--coral');
     ctx.fillText(fmtRaw(lastC.c), plotW+padL+4, y(lastC.c)+4);
   }
 
@@ -1709,7 +1803,7 @@
     const min=Math.min(...prices), max=Math.max(...prices), range=(max-min)||1;
     const stepX = plotW/(points.length-1);
     const up = points[points.length-1].price >= points[0].price;
-    const color = up ? '#5FE3B3' : '#F2666E';
+    const color = up ? cssVar('--mint') : cssVar('--coral');
     const y = p => padT + (1-(p-min)/range)*plotH;
 
     ctx.beginPath();
@@ -1724,7 +1818,7 @@
 
     const lastY = y(points[points.length-1].price);
     ctx.beginPath(); ctx.arc(lastX, lastY, 3, 0, Math.PI*2); ctx.fillStyle = color; ctx.fill();
-    ctx.font = '10px JetBrains Mono, monospace'; ctx.textAlign='left'; ctx.fillStyle = '#8C96A6';
+    ctx.font = '10px JetBrains Mono, monospace'; ctx.textAlign='left'; ctx.fillStyle = cssVar('--text-dim');
     ctx.fillText(fmtRaw(points[points.length-1].price), plotW+padL+4, lastY+4);
   }
 
@@ -1847,7 +1941,7 @@
       await db.collection('boards').doc(activeBoardSymbol).collection('posts').doc(id).update({ reported:true });
       await db.collection('reports').add({
         symbol: activeBoardSymbol, postId:id, text: post.text||'',
-        sentiment: post.sentiment||'neutral', postedAt: post.ts||null, reportedAt: Date.now()
+        postedAt: post.ts||null, reportedAt: Date.now()
       });
       showToast('신고가 접수됐어요 — 운영자가 확인 후 조치할게요');
       await loadBoardData();
@@ -1856,11 +1950,8 @@
 
   async function loadBoardData(){
     document.getElementById('boardList').innerHTML = '<div class="board-empty">불러오는 중…</div>';
-    const inst = INSTRUMENTS.find(i=>i.symbol===activeBoardSymbol);
-    document.getElementById('sentimentPanelSymbol').textContent = inst ? inst.nameKo : '';
     currentBoardPosts = await fetchPosts(activeBoardSymbol);
     renderPostList();
-    renderSentimentSummary();
   }
 
   /* ---------- Profanity filter (client-side first line of defense; Firestore rules back it up) ---------- */
@@ -1893,15 +1984,12 @@
       showToast('욕설·비속어 등 부적절한 표현이 포함되어 있어 등록할 수 없어요');
       return;
     }
-    const sentiment = document.getElementById('boardSentiment').value;
     try{
       await db.collection('boards').doc(activeBoardSymbol).collection('posts').add({
-        codename: currentCodename, sentiment, text, ts: Date.now(), reported:false
+        codename: currentCodename, text, ts: Date.now(), reported:false
       });
       textEl.value = '';
       await loadBoardData();
-      const inst = INSTRUMENTS.find(i=>i.symbol===activeBoardSymbol);
-      if (inst) refreshCardSentiment(inst);
     }catch(e){ console.error(e); showToast('글 등록에 실패했어요'); }
   }
 
@@ -1910,13 +1998,6 @@
     document.getElementById('boardSubmit').addEventListener('click', submitPost);
     document.getElementById('boardText').addEventListener('keydown', (e)=>{
       if (e.key==='Enter' && (e.metaKey||e.ctrlKey)) submitPost();
-    });
-    document.querySelectorAll('.period-tab').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        activeBoardPeriodDays = parseInt(btn.dataset.period,10);
-        document.querySelectorAll('.period-tab').forEach(b=>b.classList.toggle('active', b===btn));
-        renderSentimentSummary();
-      });
     });
     document.getElementById('boardList').addEventListener('click', (e)=>{
       const reportBtn = e.target.closest('.report-btn');
@@ -1963,9 +2044,8 @@
 
     checkExistingCodename();
     await loadBoardData();
-    await refreshAllCardSentiments();
     if (boardPollTimer) clearInterval(boardPollTimer);
-    boardPollTimer = setInterval(()=>{ loadBoardData(); refreshAllCardSentiments(); }, 20000);
+    boardPollTimer = setInterval(loadBoardData, 20000);
   }
 
   /* ---------- Auto refresh loop ---------- */
@@ -2013,12 +2093,14 @@
     await refreshAll(true);
     startLoop();
     initBoard();
+    renderFearGreed();
     setInterval(renderPulse, 1000);
     setInterval(tickAges, 1000);
+    setInterval(renderFearGreed, 900000); // 15분마다 — 지수 자체가 보통 하루 단위로 갱신돼서 자주 부를 필요 없어요
   }
   init();
 
-  window.addEventListener('resize', ()=>{
+  function redrawAllSparklines(){
     INSTRUMENTS.forEach(i=>{
       const s = state[i.symbol];
       if (s.closes && s.closes.length>1){
@@ -2026,7 +2108,33 @@
         if (canvas) drawSparkline(canvas, s.closes, s.closes[s.closes.length-1] >= s.closes[0]);
       }
     });
-  });
+  }
+
+  /* ---------- Theme (light/dark) ---------- */
+  function loadTheme(){
+    if (!hasLocalStorage()) return 'dark';
+    try{ return localStorage.getItem('wd_theme') || 'dark'; }catch(e){ return 'dark'; }
+  }
+  function saveTheme(theme){
+    if (!hasLocalStorage()) return;
+    try{ localStorage.setItem('wd_theme', theme); }catch(e){}
+  }
+  function applyTheme(theme){
+    document.documentElement.classList.toggle('light-mode', theme==='light');
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = theme==='light' ? '🌙' : '☀️'; // 지금 누르면 바뀔 모드를 아이콘으로 보여줘요
+    saveTheme(theme);
+    redrawAllSparklines();
+    if (chartSymbol) loadChartTF(chartTF); // 열려있는 상세 차트도 새 색으로 다시 그림
+  }
+  function toggleTheme(){
+    const isLight = document.documentElement.classList.contains('light-mode');
+    applyTheme(isLight ? 'dark' : 'light');
+  }
+  document.getElementById('themeToggleBtn').addEventListener('click', toggleTheme);
+  applyTheme(loadTheme());
+
+  window.addEventListener('resize', redrawAllSparklines);
 })();
 </script>
 </body>
