@@ -252,11 +252,6 @@
   }
   .board-tab.active{ border-color:var(--copper); color:var(--copper); background:var(--copper-dim); }
   .board-form{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
-  .board-form input[type=text]{
-    background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
-    font-family:var(--font-body); font-size:12.5px; padding:8px 10px;
-  }
-  .board-form input#boardNick{ width:120px; }
   .board-form select{ padding:8px 10px; }
   .board-form textarea{
     flex:1; min-width:220px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
@@ -269,7 +264,7 @@
   .board-list{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; }
   .board-post{ border:1px solid var(--border-soft); border-radius:10px; padding:10px 12px; background:var(--panel-2); }
   .board-post-head{ display:flex; align-items:center; gap:8px; margin-bottom:5px; flex-wrap:wrap; }
-  .board-nick{ font-family:var(--font-display); font-weight:600; font-size:12.5px; }
+  .board-nick{ font-family:var(--font-mono); font-weight:600; font-size:12px; color:var(--copper); }
   .board-sentiment{ font-family:var(--font-mono); font-size:9.5px; padding:1px 7px; border-radius:100px; }
   .board-sentiment.buy{ color:var(--mint); background:var(--mint-dim); }
   .board-sentiment.sell{ color:var(--coral); background:var(--coral-dim); }
@@ -278,6 +273,54 @@
   .board-text{ font-size:12.5px; color:var(--text); line-height:1.5; white-space:pre-wrap; word-break:break-word; }
   .board-empty{ font-size:12px; color:var(--text-faint); padding:12px 0; text-align:center; }
   .board-note{ font-family:var(--font-mono); font-size:10px; color:var(--text-faint); margin-top:10px; }
+
+  /* ---------- CODENAME ---------- */
+  .codename-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .codename-tag{
+    font-family:var(--font-mono); font-size:11.5px; font-weight:600; color:var(--copper);
+    background:var(--copper-dim); padding:5px 11px; border-radius:100px;
+  }
+  .codename-link{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); background:none;
+    border:1px solid var(--border); border-radius:100px; padding:4px 10px; cursor:pointer;
+  }
+  .codename-link:hover{ color:var(--text); border-color:var(--text-dim); }
+
+  .codename-modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(5,7,10,0.78); z-index:120;
+    align-items:center; justify-content:center; padding:20px;
+  }
+  .codename-modal-overlay.show{ display:flex; }
+  .codename-modal{
+    background:var(--panel); border:1px solid var(--border); border-radius:16px; width:100%; max-width:380px;
+    padding:24px 22px; position:relative;
+  }
+  .codename-modal-close{
+    position:absolute; top:14px; right:14px; background:var(--panel-2); border:1px solid var(--border);
+    color:var(--text-dim); font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:100px; cursor:pointer;
+  }
+  .codename-modal h3{ font-family:var(--font-display); font-size:15px; font-weight:600; margin:0 40px 10px 0; }
+  .codename-modal p{ font-size:12px; color:var(--text-dim); line-height:1.6; margin:0 0 14px; }
+  .codename-code-box{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:10px;
+  }
+  .codename-code-box .code{ font-family:var(--font-mono); font-size:17px; font-weight:700; color:var(--copper); letter-spacing:.05em; }
+  .codename-code-box button{
+    background:var(--copper); border:none; color:#12151a; font-family:var(--font-mono); font-weight:600;
+    font-size:11px; padding:7px 12px; border-radius:8px; cursor:pointer; flex-shrink:0;
+  }
+  .codename-warn{ font-size:11px; color:var(--coral); line-height:1.6; margin-bottom:14px; }
+  .codename-recover-form{ display:flex; gap:8px; margin-top:4px; }
+  .codename-recover-form input{
+    flex:1; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; color:var(--text);
+    font-family:var(--font-mono); font-size:13px; padding:9px 11px; letter-spacing:.05em;
+  }
+  .codename-recover-form button{
+    background:var(--copper); border:none; color:#12151a; font-family:var(--font-mono); font-weight:600;
+    font-size:12px; padding:0 16px; border-radius:8px; cursor:pointer;
+  }
+  .codename-recover-msg{ font-size:11px; color:var(--text-faint); margin-top:8px; }
 
   /* ---------- REPORT ---------- */
   .report-btn{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); background:none; border:1px solid var(--border-soft); border-radius:6px; padding:2px 7px; cursor:pointer; }
@@ -466,7 +509,7 @@
     <div class="grid" id="gridKR"></div>
   </div>
   <div class="category-block">
-    <div class="category-title">미국 메모리 · NASDAQ 달러 종가 대비</div>
+    <div class="category-title">미국 반도체 · NASDAQ 달러 종가 대비</div>
     <div class="grid" id="gridUS"></div>
   </div>
   <div class="category-block">
@@ -494,14 +537,19 @@
       <div id="sentimentSummary"></div>
     </div>
 
+    <div class="codename-bar">
+      <span class="codename-tag" id="codenameTag">코드네임 준비 중…</span>
+      <button class="codename-link" id="codenameRecoverBtn">코드네임 복구</button>
+      <button class="codename-link" id="codenameShowRecoveryBtn" style="display:none;">복구 코드 다시 보기</button>
+    </div>
+
     <div class="board-form">
-      <input type="text" id="boardNick" placeholder="닉네임">
       <select id="boardSentiment">
         <option value="neutral">중립</option>
         <option value="buy">매수</option>
         <option value="sell">매도</option>
       </select>
-      <textarea id="boardText" placeholder="이 종목에 대한 의견을 남겨보세요"></textarea>
+      <textarea id="boardText" placeholder="이 종목에 대한 의견을 무기명으로 남겨보세요"></textarea>
       <button id="boardSubmit">등록</button>
     </div>
     <div class="board-list" id="boardList"></div>
@@ -515,7 +563,7 @@
   </div>
 
   <div class="disclaimer">
-    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USD/KRW 환율은 공개 환율 API를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판 글은 별도 로그인 없이 누구나 작성할 수 있고, 이 화면을 여는 모든 사람에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. "상승/하락 이유 보기" 버튼은 실제 24시간 가격 변동 방향에 따라 구글 뉴스에서 관련 기사 목록을 가져와 보여주며(불러오지 못하면 검색 링크로 대체), 이 페이지가 직접 이유를 분석·작성하는 것은 아닙니다. <b>"증권사 목표가 컨센서스"</b>는 실시간 자동 수집이 아니라 직접 입력·수정하는 값이며(작성 시점 기준 수치를 넣어뒀어요), 목표가는 증권사 애널리스트의 예측치일 뿐 실제 주가를 보장하지 않습니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
+    <b>참고사항.</b> 환산가는 바이낸스 USDT 마진 무기한선물(perpetual futures) 시세를 실시간 환율로 곱해 만든 추정치이며, 공식 거래소 체결가가 아닙니다. 최대 10~50배 레버리지 파생상품이라 실제 원주보다 변동성이 훨씬 큽니다. "기준 종가"는 각 카드에서 직접 수정할 수 있고 이 브라우저에 저장됩니다 — 장 마감 후 실제 종가로 업데이트해서 쓰세요. SKHYNIXUSDT(SK하이닉스 국내 KRX)와 SKHYUSDT(SK하이닉스 나스닥 ADR, 티커 SKHY)는 같은 회사를 추종하지만 바이낸스에서 서로 다른 별개의 무기한선물 상품이라 가격이 완전히 같지 않을 수 있습니다. SKHYNIXUSDT·SAMSUNGUSDT 같은 국내 상장 종목 추종 상품은 국내 이용자의 실제 매매 체결은 지역 규제로 제한된 것으로 보도되었지만, 이 페이지는 시세 조회만 하므로 대부분 정상 표시됩니다. USD/KRW 환율은 공개 환율 API를 사용하며 은행 고시환율과 다를 수 있습니다. 종목 게시판 글은 실명이나 로그인 없이 시스템이 자동 발급하는 "코드네임"(예: 익명-7F2A)으로 작성되며, 이 화면을 여는 모든 사람에게 공개·공유됩니다 — 개인정보나 민감한 내용은 남기지 마세요. 코드네임은 최초 1회 보여주는 복구 코드로만 다른 기기에서 재사용할 수 있고, 복구 코드를 잃어버리면 그 코드네임은 되찾을 수 없습니다. 욕설 등 부적절한 표현은 자동 필터로 등록이 제한되며, 신고된 글은 운영자가 확인 후 삭제할 수 있습니다. <b>"참고용 지표"</b>는 최근 가격 모멘텀·펀딩비·게시판 매수/매도 비율을 단순 합산한 값으로, 검증된 예측이나 투자 신호가 아닙니다. "상승/하락 이유 보기" 버튼은 실제 24시간 가격 변동 방향에 따라 구글 뉴스에서 관련 기사 목록을 가져와 보여주며(불러오지 못하면 검색 링크로 대체), 이 페이지가 직접 이유를 분석·작성하는 것은 아닙니다. <b>"증권사 목표가 컨센서스"</b>는 실시간 자동 수집이 아니라 직접 입력·수정하는 값이며(작성 시점 기준 수치를 넣어뒀어요), 목표가는 증권사 애널리스트의 예측치일 뿐 실제 주가를 보장하지 않습니다. <b>SOXL</b>은 반도체 지수를 매일 3배로 추종하는 레버리지 ETF로, 일일 리밸런싱 구조상 지수가 횡보하기만 해도 가치가 잠식(decay)될 수 있어 단기 매매용으로 설계된 상품입니다. 장기 보유 목적에는 적합하지 않을 수 있습니다. 광고 영역은 빈 자리만 마련해둔 것으로 실제 광고 코드가 삽입되어 있지 않습니다. 투자 조언이 아닙니다.
   </div>
 
   <div class="legal-section">
@@ -547,7 +595,8 @@
         <p>Weekend Desk는 개인정보보호법 등 관련 법령을 준수하며, 다음과 같이 개인정보를 처리합니다.</p>
         <p><b>1. 수집하는 항목</b></p>
         <ul>
-          <li>게시판 이용 시: 이용자가 직접 입력하는 닉네임(실명이 아닌 자유 텍스트), 게시글 내용, 작성 시각</li>
+          <li>게시판 이용 시: 게시글 내용, 작성 시각, 매수/중립/매도 선택값, 시스템이 자동 발급하는 코드네임(실명이 아닌 임의 문자열)</li>
+          <li>코드네임 복구 코드는 원문이 아니라 일방향 해시(SHA-256)로만 저장되어, 운영자를 포함해 누구도 저장된 값으로부터 원래 복구 코드를 복원할 수 없습니다</li>
           <li>자동 수집: 접속 IP, 브라우저 정보, 쿠키 등 서비스 운영·보안 및 광고 게재 과정에서 자동으로 생성되는 정보</li>
         </ul>
         <p>사이트는 회원가입이나 로그인을 요구하지 않으며, 실명·이메일·전화번호 등을 수집하지 않습니다.</p>
@@ -569,7 +618,8 @@
     <details class="legal-item">
       <summary>커뮤니티 운영정책</summary>
       <div class="legal-body">
-        <p>종목 게시판은 별도 로그인 없이 누구나 이용할 수 있는 자유 게시판입니다. 원활한 이용을 위해 아래 정책을 운영합니다.</p>
+        <p>종목 게시판은 회원가입이나 로그인 없이, 브라우저마다 자동 발급되는 "코드네임"으로 이용하는 자유 게시판입니다. 실명이나 연락처를 요구하지 않지만, 같은 코드네임의 게시 이력이 계속 남는다는 점에서 완전 순간 익명과는 다릅니다. 원활한 이용을 위해 아래 정책을 운영합니다.</p>
+        <p><b>자동 필터</b> 욕설, 비속어, 성적인 표현 등 부적절한 단어가 포함된 게시물은 등록 시 자동으로 차단됩니다. 띄어쓰기나 특수문자로 우회한 표현도 걸러지도록 설계되어 있으나, 모든 변형을 완벽히 막지는 못할 수 있습니다.</p>
         <p><b>금지 게시물</b></p>
         <ul>
           <li>욕설, 비방, 혐오 표현</li>
@@ -602,7 +652,7 @@
     <details class="legal-item">
       <summary>저작권 및 상표 고지</summary>
       <div class="legal-body">
-        <p>SK하이닉스, 삼성전자, SanDisk, Micron, SpaceX, Binance 등 사이트에 언급된 기업·거래소명 및 상표는 각 권리자의 자산이며, 시세·종목 식별을 위한 목적으로만 사용됩니다. 본 사이트는 위 기업·거래소와 어떠한 제휴, 후원, 협력 관계가 없으며, 이들의 공식 웹사이트가 아닙니다.</p>
+        <p>SK하이닉스, 삼성전자, SanDisk, Micron, Marvell Technology, Direxion·SOXL, SpaceX, Binance 등 사이트에 언급된 기업·상품·거래소명 및 상표는 각 권리자의 자산이며, 시세·종목 식별을 위한 목적으로만 사용됩니다. 본 사이트는 위 기업·운용사·거래소와 어떠한 제휴, 후원, 협력 관계가 없으며, 이들의 공식 웹사이트가 아닙니다.</p>
         <p>"상승/하락 이유 보기" 기능을 통해 표시되는 뉴스 기사 제목과 링크는 각 언론사에 저작권이 있으며, 본 사이트는 제목과 원문 링크만 제공하고 기사 본문을 복제·게시하지 않습니다.</p>
       </div>
     </details>
@@ -660,6 +710,35 @@
   </div>
 </div>
 
+<div class="codename-modal-overlay" id="codenameNewOverlay">
+  <div class="codename-modal">
+    <button class="codename-modal-close" id="codenameNewClose">✕</button>
+    <h3>코드네임이 발급됐어요</h3>
+    <p>이 브라우저에서 앞으로 <b style="color:var(--text)">이 코드네임</b>으로 게시판 글이 등록돼요. 다른 기기에서도 같은 코드네임을 쓰려면 아래 복구 코드를 저장해두세요 — 다시 보여드리지 않아요.</p>
+    <div class="codename-code-box">
+      <span class="code" id="codenameNewCodename">-</span>
+    </div>
+    <div class="codename-code-box">
+      <span class="code" id="codenameNewRecovery">-</span>
+      <button id="codenameNewCopyBtn">복사</button>
+    </div>
+    <div class="codename-warn">⚠ 이 복구 코드는 지금만 보여요. 잃어버리면 이 코드네임은 되찾을 수 없어요.</div>
+  </div>
+</div>
+
+<div class="codename-modal-overlay" id="codenameRecoverOverlay">
+  <div class="codename-modal">
+    <button class="codename-modal-close" id="codenameRecoverClose">✕</button>
+    <h3>코드네임 복구</h3>
+    <p>다른 기기·브라우저에서 저장해둔 복구 코드를 입력하면 같은 코드네임을 이 브라우저에서도 쓸 수 있어요.</p>
+    <div class="codename-recover-form">
+      <input type="text" id="codenameRecoverInput" placeholder="예: K3M9-XQ2P">
+      <button id="codenameRecoverSubmit">복구</button>
+    </div>
+    <div class="codename-recover-msg" id="codenameRecoverMsg"></div>
+  </div>
+</div>
+
 <script>
 (function(){
   const API_BASE = 'https://fapi.binance.com/fapi/v1';
@@ -686,6 +765,8 @@
     { symbol:'SAMSUNGUSDT', nameKo:'삼성전자',   nameEn:'Samsung Electronics', group:'gridKR', market:'KRX', baseCcy:'KRW', baseDefault:285000, targetDefault:513958 },
     { symbol:'SNDKUSDT',    nameKo:'샌디스크',   nameEn:'SanDisk',   group:'gridUS',  market:'NASDAQ', baseCcy:'USD', baseDefault:1915.92, targetDefault:2035 },
     { symbol:'MUUSDT',      nameKo:'마이크론',   nameEn:'Micron Technology', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:979.30, targetDefault:1486 },
+    { symbol:'MRVLUSDT',    nameKo:'마벨 테크놀로지', nameEn:'Marvell Technology', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:237.00, targetDefault:252.26 },
+    { symbol:'SOXLUSDT',    nameKo:'SOXL (반도체 3배 레버리지 ETF)', nameEn:'Direxion Daily Semiconductor Bull 3X Shares', group:'gridUS', market:'NASDAQ', baseCcy:'USD', baseDefault:192.26, targetDefault:null, searchName:'SOXL ETF' },
     { symbol:'SPCXUSDT',    nameKo:'스페이스X',  nameEn:'SpaceX (Pre-IPO)', group:'gridPre', market:'PREIPO', baseCcy:null, baseDefault:null, targetDefault:null },
   ];
 
@@ -1143,7 +1224,7 @@
       const pill = document.getElementById('mkt-'+inst.symbol);
       if (!pill) return;
       if (inst.market==='KRX'){ pill.textContent = krxOpenNow?'국내장중':'국내장마감'; pill.className='mkt-pill'+(krxOpenNow?' open':''); }
-      else if (inst.market==='NASDAQ'){ pill.textContent = nasdaqOpenNow?'나스닥장중':'나스닥마감'; pill.className='mkt-pill'+(nasdaqOpenNow?' open':''); }
+      else if (inst.market==='NASDAQ'){ pill.textContent = nasdaqOpenNow?'미국장중':'미국장마감'; pill.className='mkt-pill'+(nasdaqOpenNow?' open':''); }
       else { pill.textContent='비상장'; pill.className='mkt-pill'; }
     });
 
@@ -1159,17 +1240,97 @@
     });
   }
 
-  /* ---------- Community board (open — no login, nickname-based) ---------- */
+  /* ---------- Community board (open — codename-based, no login) ---------- */
   let activeBoardSymbol = INSTRUMENTS[0].symbol;
   let boardPollTimer = null;
+  let currentCodename = null;
+  let sessionRecoveryCode = null; // in-memory only — never persisted, lost on reload by design
 
-  function loadNick(){
-    if (!hasLocalStorage()) return '';
-    try{ return localStorage.getItem('wd_nick') || ''; }catch(e){ return ''; }
+  async function sha256Hex(text){
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
   }
-  function saveNick(v){
+  function generateCodenameCandidate(){
+    const chars = '0123456789ABCDEF';
+    let code = '';
+    for (let i=0;i<4;i++) code += chars[Math.floor(Math.random()*16)];
+    return '익명-' + code;
+  }
+  function generateRecoveryCode(){
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // 0/O, 1/I/L 같은 헷갈리는 문자는 뺐어요
+    let code = '';
+    for (let i=0;i<10;i++) code += chars[Math.floor(Math.random()*chars.length)];
+    return code.slice(0,5) + '-' + code.slice(5,10);
+  }
+  function loadCodenameLocal(){
+    if (!hasLocalStorage()) return null;
+    try{ return localStorage.getItem('wd_codename'); }catch(e){ return null; }
+  }
+  function saveCodenameLocal(name){
     if (!hasLocalStorage()) return;
-    try{ localStorage.setItem('wd_nick', v); }catch(e){}
+    try{ localStorage.setItem('wd_codename', name); }catch(e){}
+  }
+
+  async function claimNewCodename(){
+    if (!db) return null;
+    for (let attempt=0; attempt<5; attempt++){
+      const candidate = generateCodenameCandidate();
+      try{
+        const docRef = db.collection('codenames').doc(candidate);
+        const snap = await docRef.get();
+        if (!snap.exists){
+          const recoveryCode = generateRecoveryCode();
+          const hash = await sha256Hex(recoveryCode);
+          await docRef.set({ secretHash: hash, createdAt: Date.now() });
+          saveCodenameLocal(candidate);
+          currentCodename = candidate;
+          sessionRecoveryCode = recoveryCode;
+          return { codename: candidate, recoveryCode };
+        }
+      }catch(e){ console.error('claimNewCodename error', e); }
+    }
+    // 극히 드문 충돌 폴백 — 타임스탬프 기반으로 고유값 생성
+    const fallback = '익명-' + Date.now().toString(36).slice(-4).toUpperCase();
+    saveCodenameLocal(fallback);
+    currentCodename = fallback;
+    return { codename: fallback, recoveryCode: null };
+  }
+
+  async function recoverCodenameByCode(rawCode){
+    if (!db) return null;
+    const code = rawCode.trim().toUpperCase();
+    if (!code) return null;
+    try{
+      const hash = await sha256Hex(code);
+      const snap = await db.collection('codenames').where('secretHash','==',hash).limit(1).get();
+      if (snap.empty) return null;
+      const codename = snap.docs[0].id;
+      saveCodenameLocal(codename);
+      currentCodename = codename;
+      return codename;
+    }catch(e){ console.error('recoverCodenameByCode error', e); return null; }
+  }
+
+  function updateCodenameTag(){
+    const el = document.getElementById('codenameTag');
+    if (el) el.textContent = currentCodename ? currentCodename : '코드네임 준비 중…';
+    const showBtn = document.getElementById('codenameShowRecoveryBtn');
+    if (showBtn) showBtn.style.display = sessionRecoveryCode ? '' : 'none';
+  }
+
+  async function ensureCodename(){
+    const saved = loadCodenameLocal();
+    if (saved){ currentCodename = saved; updateCodenameTag(); return; }
+    const result = await claimNewCodename();
+    updateCodenameTag();
+    if (result && result.recoveryCode) openCodenameNewModal(result.codename, result.recoveryCode);
+  }
+
+  function openCodenameNewModal(codename, recoveryCode){
+    document.getElementById('codenameNewCodename').textContent = codename;
+    document.getElementById('codenameNewRecovery').textContent = recoveryCode;
+    document.getElementById('codenameNewOverlay').classList.add('show');
   }
 
   async function fetchPosts(symbol){
@@ -1321,12 +1482,12 @@
     }
     listEl.innerHTML = currentBoardPosts.slice().reverse().map(p=>{
       const sentLabel = p.sentiment==='buy' ? '매수' : p.sentiment==='sell' ? '매도' : '중립';
-      const nick = (p.nick || '익명').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const codename = (p.codename || '익명').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const text = (p.text || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       return `
         <div class="board-post${p.reported ? ' reported' : ''}">
           <div class="board-post-head">
-            <span class="board-nick">${nick}</span>
+            <span class="board-nick">${codename}</span>
             <span class="board-sentiment ${p.sentiment||'neutral'}">${sentLabel}</span>
             ${p.reported ? '<span class="reported-badge">신고됨</span>' : ''}
             <span class="head-spacer"></span>
@@ -1355,7 +1516,7 @@
 
   /* ---------- "Why did it move" modal: ad first, then real news links ---------- */
   const KRX_CODE = { SKHYNIXUSDT:'000660', SAMSUNGUSDT:'005930' };
-  const NASDAQ_SYMBOL = { SKHYUSDT:'SKHY', SNDKUSDT:'SNDK', MUUSDT:'MU' };
+  const GFINANCE_TICKER = { SKHYUSDT:'SKHY:NASDAQ', SNDKUSDT:'SNDK:NASDAQ', MUUSDT:'MU:NASDAQ', MRVLUSDT:'MRVL:NASDAQ', SOXLUSDT:'SOXL:NYSEARCA' };
 
   function buildReasonLinks(inst, directionLabel){
     const q = encodeURIComponent(`${inst.searchName || inst.nameKo} 주가 ${directionLabel}`);
@@ -1363,8 +1524,8 @@
     if (KRX_CODE[inst.symbol]){
       links.push({ label:'네이버 금융에서 시세·뉴스 보기', url:`https://finance.naver.com/item/main.naver?code=${KRX_CODE[inst.symbol]}` });
     }
-    if (NASDAQ_SYMBOL[inst.symbol]){
-      links.push({ label:'Google Finance에서 보기', url:`https://www.google.com/finance/quote/${NASDAQ_SYMBOL[inst.symbol]}:NASDAQ` });
+    if (GFINANCE_TICKER[inst.symbol]){
+      links.push({ label:'Google Finance에서 보기', url:`https://www.google.com/finance/quote/${GFINANCE_TICKER[inst.symbol]}` });
     }
     links.push({ label:'네이버 뉴스에서 검색', url:`https://search.naver.com/search.naver?where=news&query=${q}` });
     links.push({ label:'Google 뉴스에서 검색', url:`https://news.google.com/search?q=${q}` });
@@ -1649,7 +1810,7 @@
     try{
       await db.collection('boards').doc(activeBoardSymbol).collection('posts').doc(id).update({ reported:true });
       await db.collection('reports').add({
-        symbol: activeBoardSymbol, postId:id, nick: post.nick||'', text: post.text||'',
+        symbol: activeBoardSymbol, postId:id, text: post.text||'',
         sentiment: post.sentiment||'neutral', postedAt: post.ts||null, reportedAt: Date.now()
       });
       showToast('신고가 접수됐어요 — 운영자가 확인 후 조치할게요');
@@ -1666,18 +1827,40 @@
     renderSentimentSummary();
   }
 
+  /* ---------- Profanity filter (client-side first line of defense; Firestore rules back it up) ---------- */
+  const BANNED_WORDS = [
+    // 욕설/비속어
+    '시발','씨발','씨팔','시팔','씨바','시바','ㅅㅂ','ㅆㅂ','ㅅㅃ','병신','ㅂㅅ','개새끼','개새기','새끼','새기','좆','좃',
+    '지랄','ㅈㄹ','닥쳐','닥치라','미친놈','미친년','씹','존나','ㅈㄴ','졸라','썅','개년','개놈','개소리','개판',
+    // 부모/가족 관련 욕설
+    '느금마','느그엄마','느금','니애미','니에미','애미뒤진','애미없','애비없','느그애비','호로새끼','호로자식',
+    // 성적/음란 표현
+    '보지','자지','섹스','강간','걸레년','걸레','창녀','창놈','19금','av보','자위','성기',
+    // 영어 욕설
+    'fuck','shit','bitch','asshole','dick','pussy','cunt',
+  ];
+  function normalizeForFilter(text){
+    return (text||'').replace(/[\s\-_.,!?~*'"()\[\]{}]/g, '').toLowerCase();
+  }
+  function containsProfanity(text){
+    const norm = normalizeForFilter(text);
+    return BANNED_WORDS.some(w => norm.includes(w));
+  }
+
   async function submitPost(){
     if (!db){ showToast('게시판 연결에 문제가 있어요. 새로고침 후 다시 시도해주세요'); return; }
+    if (!currentCodename){ showToast('코드네임을 준비하는 중이에요, 잠시 후 다시 시도해주세요'); return; }
     const textEl = document.getElementById('boardText');
     const text = textEl.value.trim();
     if (!text) return;
-    const nickEl = document.getElementById('boardNick');
-    const nick = nickEl.value.trim() || '익명';
+    if (containsProfanity(text)){
+      showToast('욕설·비속어 등 부적절한 표현이 포함되어 있어 등록할 수 없어요');
+      return;
+    }
     const sentiment = document.getElementById('boardSentiment').value;
-    saveNick(nick);
     try{
       await db.collection('boards').doc(activeBoardSymbol).collection('posts').add({
-        nick, sentiment, text, ts: Date.now(), reported:false
+        codename: currentCodename, sentiment, text, ts: Date.now(), reported:false
       });
       textEl.value = '';
       await loadBoardData();
@@ -1688,8 +1871,6 @@
 
   async function initBoard(){
     buildBoardTabs();
-    const nick = loadNick();
-    if (nick) document.getElementById('boardNick').value = nick;
     document.getElementById('boardSubmit').addEventListener('click', submitPost);
     document.getElementById('boardText').addEventListener('keydown', (e)=>{
       if (e.key==='Enter' && (e.metaKey||e.ctrlKey)) submitPost();
@@ -1705,6 +1886,45 @@
       const reportBtn = e.target.closest('.report-btn');
       if (reportBtn){ handleReport(reportBtn.dataset.reportId); return; }
     });
+
+    document.getElementById('codenameRecoverBtn').addEventListener('click', ()=>{
+      document.getElementById('codenameRecoverMsg').textContent = '';
+      document.getElementById('codenameRecoverInput').value = '';
+      document.getElementById('codenameRecoverOverlay').classList.add('show');
+    });
+    document.getElementById('codenameShowRecoveryBtn').addEventListener('click', ()=>{
+      if (sessionRecoveryCode) openCodenameNewModal(currentCodename, sessionRecoveryCode);
+    });
+    document.getElementById('codenameNewClose').addEventListener('click', ()=>{
+      document.getElementById('codenameNewOverlay').classList.remove('show');
+    });
+    document.getElementById('codenameRecoverClose').addEventListener('click', ()=>{
+      document.getElementById('codenameRecoverOverlay').classList.remove('show');
+    });
+    document.getElementById('codenameNewCopyBtn').addEventListener('click', async ()=>{
+      const text = `코드네임: ${document.getElementById('codenameNewCodename').textContent}\n복구 코드: ${document.getElementById('codenameNewRecovery').textContent}`;
+      try{ await navigator.clipboard.writeText(text); showToast('복사했어요 — 안전한 곳에 저장해두세요'); }
+      catch(e){ showToast('복사에 실패했어요 — 직접 메모해두세요'); }
+    });
+    document.getElementById('codenameRecoverSubmit').addEventListener('click', async ()=>{
+      const input = document.getElementById('codenameRecoverInput');
+      const msgEl = document.getElementById('codenameRecoverMsg');
+      msgEl.textContent = '확인 중…';
+      const result = await recoverCodenameByCode(input.value);
+      if (result){
+        updateCodenameTag();
+        document.getElementById('codenameRecoverOverlay').classList.remove('show');
+        showToast(result + '(으)로 복구됐어요');
+        loadBoardData();
+      } else {
+        msgEl.textContent = '일치하는 코드네임을 찾지 못했어요 — 코드를 다시 확인해주세요';
+      }
+    });
+    [document.getElementById('codenameNewOverlay'), document.getElementById('codenameRecoverOverlay')].forEach(overlay=>{
+      overlay.addEventListener('click', (e)=>{ if (e.target===overlay) overlay.classList.remove('show'); });
+    });
+
+    await ensureCodename();
     await loadBoardData();
     await refreshAllCardSentiments();
     if (boardPollTimer) clearInterval(boardPollTimer);
