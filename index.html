@@ -128,6 +128,15 @@
 
   .compare-block{ margin-top:12px; padding:10px 12px; border-radius:10px; background:var(--panel-2); border:1px solid var(--border-soft); }
   .target-block{ border-color:rgba(226,144,63,0.25); }
+  .target-progress-row{ display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .target-progress-track{ flex:1; height:8px; border-radius:5px; background:var(--border-soft); overflow:hidden; }
+  .target-progress-fill{ height:100%; border-radius:5px; background:var(--copper); transition:width .3s; }
+  .target-progress-fill.exceeded{ background:var(--mint); }
+  .target-progress-pct{ font-family:var(--font-mono); font-size:11px; font-weight:600; color:var(--copper); width:50px; text-align:right; flex-shrink:0; }
+  .target-progress-pct.exceeded{ color:var(--mint); }
+  .target-progress-label{ font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); }
+  .target-progress-label b{ color:var(--text-dim); font-weight:600; }
+  .target-progress-label b.exceeded-text{ color:var(--mint); }
   .compare-label{ font-family:var(--font-mono); font-size:9.5px; color:var(--text-faint); letter-spacing:.04em; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; }
   .compare-row{ display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; }
   .compare-delta{ font-family:var(--font-mono); font-size:14px; font-weight:600; }
@@ -276,6 +285,11 @@
 
   /* ---------- CODENAME ---------- */
   .codename-bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .codename-create-btn{
+    font-family:var(--font-body); font-weight:600; font-size:12.5px; color:#12151a;
+    background:var(--copper); border:none; padding:8px 14px; border-radius:8px; cursor:pointer;
+  }
+  .codename-create-btn:hover{ opacity:.92; }
   .codename-tag{
     font-family:var(--font-mono); font-size:11.5px; font-weight:600; color:var(--copper);
     background:var(--copper-dim); padding:5px 11px; border-radius:100px;
@@ -538,8 +552,9 @@
     </div>
 
     <div class="codename-bar">
-      <span class="codename-tag" id="codenameTag">코드네임 준비 중…</span>
-      <button class="codename-link" id="codenameRecoverBtn">코드네임 복구</button>
+      <button class="codename-create-btn" id="codenameCreateBtn">🆔 익명 아이디 만들기</button>
+      <span class="codename-tag" id="codenameTag" style="display:none;"></span>
+      <button class="codename-link" id="codenameRecoverBtn">이미 아이디 있어요 (복구)</button>
       <button class="codename-link" id="codenameShowRecoveryBtn" style="display:none;">복구 코드 다시 보기</button>
     </div>
 
@@ -1073,18 +1088,25 @@
   function renderTarget(container, current, target, fmt){
     if (!container) return;
     if (target==null || isNaN(target) || target<=0 || current==null){
-      container.innerHTML = '<span class="compare-empty">목표가를 입력하면 상승여력이 표시돼요</span>';
+      container.innerHTML = '<span class="compare-empty">목표가를 입력하면 도달률이 표시돼요</span>';
       return;
     }
-    const delta = target - current;
-    const pct = (delta/current)*100;
-    const up = delta>0, down = delta<0;
-    const cls = up?'up':down?'down':'flat';
+    const reachedPct = (current/target)*100;
+    const exceeded = current >= target;
+    const cls = exceeded ? 'exceeded' : 'normal';
+    const fillWidth = Math.min(100, reachedPct);
+    const upsidePct = ((target-current)/current)*100;
+    const label = exceeded
+      ? `목표가 ${fmt(target)} <b class="exceeded-text">이미 초과 달성</b> (${reachedPct.toFixed(1)}%)`
+      : `목표가 ${fmt(target)} 대비 <b>${reachedPct.toFixed(1)}%</b> 지점 · 여력 +${upsidePct.toFixed(1)}%`;
     container.innerHTML = `
-      <div class="compare-row">
-        <span class="compare-delta ${cls}">${fmt(target)}</span>
-        <span class="compare-pct ${cls}">${up?'+':''}${pct.toFixed(2)}% 여력</span>
-      </div>`;
+      <div class="target-progress-row">
+        <div class="target-progress-track">
+          <div class="target-progress-fill ${cls}" style="width:${fillWidth}%"></div>
+        </div>
+        <span class="target-progress-pct ${cls}">${reachedPct.toFixed(1)}%</span>
+      </div>
+      <div class="target-progress-label">${label}</div>`;
   }
 
   function renderError(symbol, msg){
@@ -1312,18 +1334,32 @@
     }catch(e){ console.error('recoverCodenameByCode error', e); return null; }
   }
 
-  function updateCodenameTag(){
-    const el = document.getElementById('codenameTag');
-    if (el) el.textContent = currentCodename ? currentCodename : '코드네임 준비 중…';
+  function updateCodenameUI(){
+    const createBtn = document.getElementById('codenameCreateBtn');
+    const tagEl = document.getElementById('codenameTag');
+    const recoverBtn = document.getElementById('codenameRecoverBtn');
     const showBtn = document.getElementById('codenameShowRecoveryBtn');
-    if (showBtn) showBtn.style.display = sessionRecoveryCode ? '' : 'none';
+    const hasId = !!currentCodename;
+    if (createBtn) createBtn.style.display = hasId ? 'none' : '';
+    if (tagEl){ tagEl.style.display = hasId ? '' : 'none'; tagEl.textContent = currentCodename || ''; }
+    if (recoverBtn) recoverBtn.style.display = hasId ? 'none' : '';
+    if (showBtn) showBtn.style.display = (hasId && sessionRecoveryCode) ? '' : 'none';
   }
 
-  async function ensureCodename(){
+  // 페이지 로드시엔 저장된 아이디가 있는지 "조용히" 확인만 하고, 없다고 바로 새로 만들지는 않음 —
+  // 새 아이디 발급(+팝업)은 "익명 아이디 만들기" 버튼을 눌렀을 때만 일어남.
+  function checkExistingCodename(){
     const saved = loadCodenameLocal();
-    if (saved){ currentCodename = saved; updateCodenameTag(); return; }
+    if (saved) currentCodename = saved;
+    updateCodenameUI();
+  }
+
+  async function createCodenameInteractive(){
+    const btn = document.getElementById('codenameCreateBtn');
+    if (btn){ btn.disabled = true; btn.textContent = '만드는 중…'; }
     const result = await claimNewCodename();
-    updateCodenameTag();
+    if (btn){ btn.disabled = false; btn.textContent = '🆔 익명 아이디 만들기'; }
+    updateCodenameUI();
     if (result && result.recoveryCode) openCodenameNewModal(result.codename, result.recoveryCode);
   }
 
@@ -1849,7 +1885,7 @@
 
   async function submitPost(){
     if (!db){ showToast('게시판 연결에 문제가 있어요. 새로고침 후 다시 시도해주세요'); return; }
-    if (!currentCodename){ showToast('코드네임을 준비하는 중이에요, 잠시 후 다시 시도해주세요'); return; }
+    if (!currentCodename){ showToast('먼저 위에 있는 "🆔 익명 아이디 만들기"를 눌러주세요'); return; }
     const textEl = document.getElementById('boardText');
     const text = textEl.value.trim();
     if (!text) return;
@@ -1887,6 +1923,7 @@
       if (reportBtn){ handleReport(reportBtn.dataset.reportId); return; }
     });
 
+    document.getElementById('codenameCreateBtn').addEventListener('click', createCodenameInteractive);
     document.getElementById('codenameRecoverBtn').addEventListener('click', ()=>{
       document.getElementById('codenameRecoverMsg').textContent = '';
       document.getElementById('codenameRecoverInput').value = '';
@@ -1912,7 +1949,7 @@
       msgEl.textContent = '확인 중…';
       const result = await recoverCodenameByCode(input.value);
       if (result){
-        updateCodenameTag();
+        updateCodenameUI();
         document.getElementById('codenameRecoverOverlay').classList.remove('show');
         showToast(result + '(으)로 복구됐어요');
         loadBoardData();
@@ -1924,7 +1961,7 @@
       overlay.addEventListener('click', (e)=>{ if (e.target===overlay) overlay.classList.remove('show'); });
     });
 
-    await ensureCodename();
+    checkExistingCodename();
     await loadBoardData();
     await refreshAllCardSentiments();
     if (boardPollTimer) clearInterval(boardPollTimer);
